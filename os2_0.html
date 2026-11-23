@@ -1,0 +1,3126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WebOS 2.0</title>
+<style>
+/* ==================== BASE ==================== */
+:root{
+  --accent:#4f8cff;
+  --bg-base:#08080f;
+  --bg-panel:rgba(22,22,34,.94);
+  --bg-panel-solid:#161622;
+  --bg-input:rgba(0,0,0,.3);
+  --bg-hover:rgba(255,255,255,.08);
+  --bg-active:rgba(255,255,255,.13);
+  --text:#e8eaf2;
+  --text-dim:#8b91ad;
+  --text-mute:#5a5f7a;
+  --stroke:rgba(255,255,255,.11);
+  --stroke-strong:rgba(255,255,255,.22);
+  --radius:11px;
+  --win-blur:24px;
+  --font-size:13px;
+  --taskbar-h:48px;
+  --taskbar-pos:bottom;
+}
+body.light{
+  --bg-base:#eef1f8;
+  --bg-panel:rgba(255,255,255,.95);
+  --bg-panel-solid:#ffffff;
+  --bg-input:rgba(0,0,0,.05);
+  --bg-hover:rgba(0,0,0,.05);
+  --bg-active:rgba(0,0,0,.1);
+  --text:#1a1a2e;
+  --text-dim:#5a5f7a;
+  --text-mute:#8b8fa8;
+  --stroke:rgba(0,0,0,.1);
+  --stroke-strong:rgba(0,0,0,.22);
+}
+body.amoled{
+  --bg-base:#000;
+  --bg-panel:rgba(0,0,0,.97);
+  --bg-panel-solid:#000;
+  --bg-input:rgba(255,255,255,.05);
+  --bg-hover:rgba(255,255,255,.07);
+  --bg-active:rgba(255,255,255,.12);
+}
+body.no-anim *{animation-duration:0s!important;transition-duration:0s!important}
+
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  font-family:'Segoe UI',Roboto,system-ui,-apple-system,sans-serif;
+  overflow:hidden;background:var(--bg-base);color:var(--text);
+  -webkit-user-select:none;user-select:none;font-size:var(--font-size);
+}
+input,textarea,button{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--bg-active);border-radius:6px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ==================== BOOT ==================== */
+#boot{
+  position:fixed;inset:0;z-index:99999;background:#05050a;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+  transition:opacity .7s ease;
+}
+#boot .logo{
+  font-size:64px;font-weight:800;letter-spacing:-3px;
+  background:linear-gradient(90deg,#4f8cff,#a855f7,#ec4899);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:.6;transform:scale(.985)}50%{opacity:1;transform:scale(1.01)}}
+.bootbar{width:260px;height:4px;background:#191926;border-radius:4px;overflow:hidden}
+.bootbar i{display:block;height:100%;width:0;border-radius:4px;
+  background:linear-gradient(90deg,#4f8cff,#a855f7,#ec4899);animation:load 2.2s ease forwards}
+@keyframes load{to{width:100%}}
+.boottext{font-size:11px;color:#5a5f7a;letter-spacing:3px;text-transform:uppercase}
+
+/* ==================== DESKTOP ==================== */
+#desktop{position:fixed;inset:0;overflow:hidden;transition:background .5s ease}
+body.taskbar-top #desktop{padding-top:0}
+#deskicons{
+  position:absolute;top:16px;left:16px;
+  display:flex;flex-direction:column;flex-wrap:wrap;gap:4px;
+  max-height:calc(100vh - 110px);align-content:flex-start;z-index:1;
+}
+body.taskbar-top #deskicons{top:calc(var(--taskbar-h) + 16px)}
+.deskicon{
+  width:88px;padding:10px 4px;border-radius:10px;text-align:center;
+  cursor:pointer;font-size:11.5px;color:#fff;transition:background .15s;
+  text-shadow:0 1px 3px rgba(0,0,0,.7);
+}
+body.light .deskicon{color:var(--text);text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.deskicon:hover{background:rgba(255,255,255,.15)}
+.deskicon .ico{font-size:30px;display:block;margin-bottom:5px;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.5))}
+body.icon-large .deskicon .ico{font-size:40px}
+body.icon-large .deskicon{width:100px;font-size:12.5px}
+
+/* ==================== WINDOWS ==================== */
+#windowLayer{position:absolute;inset:0;pointer-events:none;z-index:10}
+.window{
+  position:absolute;pointer-events:auto;
+  display:flex;flex-direction:column;
+  min-width:280px;min-height:150px;
+  background:var(--bg-panel);backdrop-filter:blur(var(--win-blur));
+  -webkit-backdrop-filter:blur(var(--win-blur));
+  border:1px solid var(--stroke);border-radius:var(--radius);overflow:hidden;
+  box-shadow:0 26px 70px rgba(0,0,0,.55);
+  animation:winIn .16s ease;
+}
+@keyframes winIn{from{transform:scale(.95);opacity:0}}
+.window.focused{border-color:var(--stroke-strong);box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.window.maximized{border-radius:0}
+.titlebar{
+  height:38px;flex:0 0 38px;display:flex;align-items:center;gap:8px;
+  padding:0 5px 0 12px;background:var(--bg-hover);
+  border-bottom:1px solid var(--stroke);
+}
+.titlebar .ti{font-size:14px}
+.titlebar .tt{flex:1;font-size:12.5px;color:var(--text-dim);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.tb-buttons{display:flex;gap:2px}
+.tb-buttons button{
+  width:32px;height:27px;border:none;border-radius:6px;background:transparent;
+  color:var(--text-dim);cursor:pointer;font-size:13px;line-height:1;
+}
+.tb-buttons button:hover{background:var(--bg-active);color:var(--text)}
+.tb-buttons .close:hover{background:#e5484d;color:#fff}
+.wbody{flex:1;overflow:auto;position:relative;font-size:var(--font-size)}
+
+/* ==================== TASKBAR ==================== */
+#taskbar{
+  position:fixed;left:0;right:0;height:var(--taskbar-h);z-index:5000;
+  bottom:0;top:auto;
+  display:flex;align-items:center;gap:6px;padding:0 8px;
+  background:var(--bg-panel);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--stroke);
+}
+body.taskbar-top #taskbar{top:0;bottom:auto;border-top:none;border-bottom:1px solid var(--stroke)}
+#startBtn{
+  height:36px;padding:0 14px;border-radius:8px;border:none;
+  background:var(--bg-hover);color:var(--text);font-size:13px;cursor:pointer;
+  display:flex;align-items:center;gap:8px;transition:background .15s;font-weight:600;
+}
+#startBtn:hover{background:var(--bg-active)}
+#startBtn.on{background:var(--accent);color:#fff}
+#tasks{display:flex;gap:6px;flex:1;overflow:hidden}
+.taskbtn{
+  height:36px;max-width:190px;padding:0 12px;border-radius:8px;border:none;
+  background:var(--bg-hover);color:var(--text-dim);font-size:12px;cursor:pointer;
+  display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;transition:background .15s;
+}
+.taskbtn:hover{background:var(--bg-active)}
+.taskbtn.active{background:rgba(79,140,255,.3);color:var(--text);
+  box-shadow:inset 0 -2px 0 var(--accent)}
+#tray{display:flex;align-items:center;gap:4px;padding:0 4px;font-size:12px;color:var(--text-dim)}
+.tray-btn{
+  height:34px;padding:0 9px;border-radius:7px;border:none;background:transparent;
+  color:var(--text-dim);cursor:pointer;font-size:13px;display:flex;align-items:center;gap:5px;
+}
+.tray-btn:hover{background:var(--bg-active);color:var(--text)}
+#clock{font-variant-numeric:tabular-nums;letter-spacing:.4px;font-weight:500}
+
+/* ==================== START MENU ==================== */
+#startMenu{
+  position:fixed;left:8px;width:340px;z-index:5001;
+  bottom:calc(var(--taskbar-h) + 8px);top:auto;
+  background:var(--bg-panel);backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--stroke);border-radius:14px;padding:10px;
+  box-shadow:0 24px 70px rgba(0,0,0,.6);
+  display:none;max-height:calc(100vh - 90px);overflow-y:auto;
+}
+body.taskbar-top #startMenu{top:calc(var(--taskbar-h) + 8px);bottom:auto}
+#startMenu.open{display:block;animation:menuIn .15s ease}
+@keyframes menuIn{from{transform:translateY(10px);opacity:0}}
+.sm-title{font-size:10px;color:var(--text-mute);padding:8px 10px 6px;
+  text-transform:uppercase;letter-spacing:1.3px;font-weight:600}
+.sm-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 2px}
+.sm-app{
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:10px 4px;border-radius:9px;cursor:pointer;font-size:10.5px;
+  color:var(--text-dim);text-align:center;transition:background .12s;
+}
+.sm-app:hover{background:var(--bg-hover);color:var(--text)}
+.sm-app .i{font-size:24px}
+.sm-sep{height:1px;background:var(--stroke);margin:10px 6px}
+.sm-item{
+  display:flex;align-items:center;gap:12px;padding:8px 10px;border-radius:9px;
+  cursor:pointer;font-size:12.5px;color:var(--text-dim);transition:background .12s;
+}
+.sm-item:hover{background:var(--bg-hover);color:var(--text)}
+.sm-item .i{font-size:17px;width:22px;text-align:center}
+.sm-foot{display:flex;gap:8px;padding:6px 2px 2px}
+.sm-foot button{
+  flex:1;height:34px;border:none;border-radius:8px;background:var(--bg-hover);
+  color:var(--text-dim);font-size:11.5px;cursor:pointer;transition:background .15s;
+}
+.sm-foot button:hover{background:var(--bg-active);color:var(--text)}
+
+/* ==================== CONTEXT MENU ==================== */
+#ctxMenu{
+  position:absolute;z-index:6000;min-width:210px;display:none;
+  background:var(--bg-panel);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--stroke);border-radius:10px;padding:6px;
+  box-shadow:0 20px 50px rgba(0,0,0,.6);font-size:12.5px;
+}
+#ctxMenu.open{display:block;animation:menuIn .12s ease}
+.ctx-item{padding:8px 12px;border-radius:7px;cursor:pointer;color:var(--text-dim);
+  display:flex;align-items:center;gap:10px}
+.ctx-item:hover{background:var(--bg-hover);color:var(--text)}
+.ctx-sep{height:1px;background:var(--stroke);margin:5px 8px}
+
+/* ==================== NOTIFICATIONS ==================== */
+#notifications{
+  position:fixed;top:16px;right:16px;z-index:7000;
+  display:flex;flex-direction:column;gap:8px;pointer-events:none;
+  max-width:340px;
+}
+body.taskbar-top #notifications{top:calc(var(--taskbar-h) + 16px)}
+.toast{
+  background:var(--bg-panel);backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--stroke);border-radius:11px;padding:12px 14px;
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+  display:flex;gap:11px;pointer-events:auto;
+  animation:toastIn .25s cubic-bezier(.2,.9,.3,1.2);
+}
+@keyframes toastIn{from{transform:translateX(50px);opacity:0}}
+.toast.removing{animation:toastOut .2s ease forwards}
+@keyframes toastOut{to{transform:translateX(50px);opacity:0}}
+.toast .ti{font-size:20px;flex-shrink:0}
+.toast .tb{flex:1;min-width:0}
+.toast .tt{font-weight:600;font-size:12.5px;color:var(--text);margin-bottom:2px}
+.toast .td{font-size:11.5px;color:var(--text-dim);line-height:1.4;word-break:break-word}
+
+/* ==================== LOCK SCREEN ==================== */
+#lockScreen{
+  position:fixed;inset:0;z-index:9000;display:none;
+  background:rgba(8,8,15,.75);backdrop-filter:blur(30px);
+  -webkit-backdrop-filter:blur(30px);
+  flex-direction:column;align-items:center;justify-content:center;
+  color:#fff;cursor:pointer;
+}
+#lockScreen.show{display:flex}
+.lock-time{font-size:96px;font-weight:200;letter-spacing:-3px;line-height:1;
+  font-variant-numeric:tabular-nums;text-shadow:0 4px 30px rgba(0,0,0,.4)}
+.lock-date{font-size:18px;color:rgba(255,255,255,.7);margin-top:8px;letter-spacing:1px}
+.lock-hint{position:absolute;bottom:60px;font-size:12px;color:rgba(255,255,255,.5);
+  letter-spacing:2px;text-transform:uppercase;animation:pulse 2s ease-in-out infinite}
+.lock-user{margin-top:40px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.lock-avatar{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,#4f8cff,#a855f7);
+  display:flex;align-items:center;justify-content:center;font-size:38px;
+  box-shadow:0 8px 30px rgba(79,140,255,.4);
+}
+.lock-name{font-size:16px;font-weight:500}
+
+/* ==================== COMMAND PALETTE ==================== */
+#cmdPalette{
+  position:fixed;inset:0;z-index:8000;display:none;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(4px);
+  align-items:flex-start;justify-content:center;padding-top:15vh;
+}
+#cmdPalette.show{display:flex}
+.cp-box{
+  width:min(600px,90vw);background:var(--bg-panel);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--stroke);border-radius:14px;overflow:hidden;
+  box-shadow:0 30px 80px rgba(0,0,0,.7);
+  animation:cpIn .2s cubic-bezier(.2,.9,.3,1.1);
+}
+@keyframes cpIn{from{transform:translateY(-10px) scale(.97);opacity:0}}
+.cp-input{
+  width:100%;height:56px;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:15px;padding:0 18px;
+  border-bottom:1px solid var(--stroke);
+}
+.cp-input::placeholder{color:var(--text-mute)}
+.cp-results{max-height:50vh;overflow-y:auto;padding:6px}
+.cp-item{
+  display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:8px;
+  cursor:pointer;font-size:13px;color:var(--text-dim);
+}
+.cp-item.active,.cp-item:hover{background:var(--bg-hover);color:var(--text)}
+.cp-item .i{font-size:18px;width:22px;text-align:center}
+.cp-item .sub{font-size:11px;color:var(--text-mute);margin-left:auto}
+
+/* ==================== APP: FILES ==================== */
+.fm-toolbar{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--stroke);
+  background:var(--bg-hover);align-items:center}
+.fm-toolbar button{
+  height:28px;padding:0 10px;border:none;border-radius:7px;font-size:12px;
+  background:var(--bg-active);color:var(--text-dim);cursor:pointer;white-space:nowrap;
+}
+.fm-toolbar button:hover{background:var(--bg-hover);color:var(--text)}
+.fm-path{
+  flex:1;height:28px;border-radius:7px;border:1px solid var(--stroke);
+  background:var(--bg-input);color:var(--text);padding:0 10px;font-size:12px;
+  outline:none;min-width:60px;
+}
+.fm-list{padding:6px}
+.fm-row{
+  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
+  cursor:pointer;font-size:13px;
+}
+.fm-row:hover{background:var(--bg-hover)}
+.fm-row .fi{font-size:17px;width:22px;text-align:center}
+.fm-empty{padding:30px;text-align:center;color:var(--text-mute);font-size:12.5px}
+
+/* ==================== APP: NOTEPAD ==================== */
+.np-toolbar{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--stroke);
+  background:var(--bg-hover);flex-wrap:wrap}
+.np-toolbar button{
+  height:28px;padding:0 11px;border:none;border-radius:7px;font-size:12px;
+  background:var(--bg-active);color:var(--text-dim);cursor:pointer;
+}
+.np-toolbar button:hover{background:var(--bg-hover);color:var(--text)}
+.np-area{
+  width:100%;height:calc(100% - 45px);border:none;outline:none;resize:none;
+  background:transparent;color:var(--text);padding:14px 16px;font-size:13.5px;
+  line-height:1.65;font-family:'Consolas','Menlo',monospace;
+}
+
+/* ==================== APP: CALC ==================== */
+.calc{display:flex;flex-direction:column;height:100%;padding:10px;gap:10px;background:var(--bg-input)}
+.calc-display{
+  flex:0 0 76px;background:var(--bg-input);border:1px solid var(--stroke);
+  border-radius:10px;display:flex;flex-direction:column;justify-content:flex-end;
+  align-items:flex-end;padding:10px 14px;overflow:hidden;
+}
+.calc-expr{font-size:12px;color:var(--text-mute);min-height:15px;white-space:nowrap;
+  overflow:hidden;max-width:100%}
+.calc-val{font-size:27px;font-weight:600;color:var(--text);white-space:nowrap;
+  overflow:hidden;max-width:100%}
+.calc-grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.calc-grid button{
+  border:none;border-radius:9px;background:var(--bg-hover);color:var(--text);
+  font-size:16px;cursor:pointer;transition:background .12s,transform .06s;
+}
+.calc-grid button:hover{background:var(--bg-active)}
+.calc-grid button:active{transform:scale(.96)}
+.calc-grid .op{background:rgba(79,140,255,.25);color:#bcd4ff}
+.calc-grid .op:hover{background:rgba(79,140,255,.42)}
+.calc-grid .eq{background:var(--accent);color:#fff}
+.calc-grid .eq:hover{filter:brightness(1.15)}
+.calc-grid .fn{background:var(--bg-input);color:var(--text-mute);font-size:14px}
+
+/* ==================== APP: TERMINAL ==================== */
+.term{
+  height:100%;display:flex;flex-direction:column;background:#0a0a12;
+  font-family:'Consolas','Menlo','Courier New',monospace;font-size:12.7px;padding:10px;
+  color:#c8d2e8;line-height:1.55;cursor:text;
+}
+.term-out{flex:1;overflow-y:auto;white-space:pre-wrap;word-break:break-word}
+.term-line{display:flex;gap:7px;align-items:center;padding-top:4px}
+.term-prompt{color:#4f8cff;white-space:nowrap;font-weight:600}
+.term-in{
+  flex:1;background:transparent;border:none;outline:none;color:#e6ecff;
+  font-family:inherit;font-size:inherit;caret-color:#4f8cff;
+}
+.term-ok{color:#3ddc84}
+.term-err{color:#ff6b6b}
+.term-dim{color:#6b7192}
+.term-hi{color:#c084fc}
+.term-yellow{color:#fbbf24}
+.term-cyan{color:#22d3ee}
+
+/* ==================== APP: SNAKE ==================== */
+.snake-wrap{display:flex;flex-direction:column;align-items:center;gap:9px;padding:12px;
+  background:var(--bg-input);height:100%}
+.snake-score{font-size:13px;color:var(--text-dim)}
+.snake-score b{color:var(--accent);font-size:15px}
+.snake-wrap canvas{border-radius:10px;background:#0d0d16;border:1px solid var(--stroke);outline:none}
+.snake-hint{font-size:11px;color:var(--text-mute);text-align:center}
+
+/* ==================== APP: MINESWEEPER ==================== */
+.ms-wrap{padding:12px;display:flex;flex-direction:column;align-items:center;gap:10px;
+  background:var(--bg-input);height:100%}
+.ms-info{display:flex;gap:20px;font-size:13px;color:var(--text-dim)}
+.ms-info b{color:var(--accent)}
+.ms-grid{display:grid;gap:2px;background:var(--stroke);padding:2px;border-radius:6px}
+.ms-cell{
+  width:28px;height:28px;background:var(--bg-hover);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;font-size:13px;
+  font-weight:600;cursor:pointer;transition:background .1s;user-select:none;
+}
+.ms-cell:hover{background:var(--bg-active)}
+.ms-cell.revealed{background:var(--bg-input);cursor:default}
+.ms-cell.mine{background:#e5484d;color:#fff}
+.ms-cell.flag{background:rgba(251,191,36,.3)}
+.ms-cell.n1{color:#4f8cff}.ms-cell.n2{color:#22c55e}.ms-cell.n3{color:#ef4444}
+.ms-cell.n4{color:#a855f7}.ms-cell.n5{color:#f59e0b}.ms-cell.n6{color:#22d3ee}
+.ms-cell.n7{color:#ec4899}.ms-cell.n8{color:#8b91ad}
+.ms-msg{font-size:13px;color:var(--text-dim);text-align:center;min-height:20px}
+.ms-btn{padding:7px 16px;border-radius:8px;border:none;background:var(--accent);
+  color:#fff;cursor:pointer;font-size:12px;font-weight:500}
+.ms-btn:hover{filter:brightness(1.15)}
+
+/* ==================== APP: PAINT ==================== */
+.paint{display:flex;flex-direction:column;height:100%;background:var(--bg-input)}
+.paint-toolbar{display:flex;gap:6px;padding:8px;border-bottom:1px solid var(--stroke);
+  background:var(--bg-hover);align-items:center;flex-wrap:wrap}
+.paint-toolbar button{
+  height:28px;padding:0 10px;border:none;border-radius:7px;font-size:12px;
+  background:var(--bg-active);color:var(--text-dim);cursor:pointer;
+}
+.paint-toolbar button:hover{background:var(--bg-hover);color:var(--text)}
+.paint-toolbar button.on{background:var(--accent);color:#fff}
+.paint-toolbar input[type=color]{
+  width:28px;height:28px;border:none;border-radius:6px;background:transparent;
+  cursor:pointer;padding:0;
+}
+.paint-toolbar input[type=range]{width:80px;accent-color:var(--accent)}
+.paint-canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:10px;overflow:hidden}
+.paint-canvas-wrap canvas{background:#fff;border-radius:6px;cursor:crosshair;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+
+/* ==================== APP: CLOCK ==================== */
+.clock-app{padding:16px;height:100%;display:flex;flex-direction:column;gap:12px;
+  background:var(--bg-input)}
+.clock-tabs{display:flex;gap:6px;padding:0;margin-bottom:4px}
+.clock-tab{padding:7px 14px;border-radius:8px;border:none;background:var(--bg-hover);
+  color:var(--text-dim);cursor:pointer;font-size:12px}
+.clock-tab.on{background:var(--accent);color:#fff}
+.clock-display{text-align:center;padding:20px 0}
+.clock-big{font-size:52px;font-weight:200;letter-spacing:-2px;
+  font-variant-numeric:tabular-nums;color:var(--text)}
+.clock-sub{font-size:13px;color:var(--text-dim);margin-top:6px}
+.clock-actions{display:flex;gap:8px;justify-content:center;margin-top:8px}
+.clock-actions button{
+  padding:9px 20px;border-radius:9px;border:none;background:var(--bg-hover);
+  color:var(--text);cursor:pointer;font-size:13px;min-width:90px;
+}
+.clock-actions button:hover{background:var(--bg-active)}
+.clock-actions button.primary{background:var(--accent);color:#fff}
+.clock-actions button.primary:hover{filter:brightness(1.15)}
+
+/* ==================== APP: TODO ==================== */
+.todo{padding:14px;height:100%;display:flex;flex-direction:column;gap:10px;
+  background:var(--bg-input)}
+.todo-input-row{display:flex;gap:8px}
+.todo-input-row input{
+  flex:1;height:36px;border:1px solid var(--stroke);border-radius:9px;
+  background:var(--bg-input);color:var(--text);padding:0 12px;font-size:13px;outline:none;
+}
+.todo-input-row input:focus{border-color:var(--accent)}
+.todo-input-row button{
+  height:36px;padding:0 16px;border-radius:9px;border:none;
+  background:var(--accent);color:#fff;cursor:pointer;font-size:13px;font-weight:500;
+}
+.todo-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.todo-item{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;
+  background:var(--bg-hover);font-size:13px;
+}
+.todo-item.done{opacity:.5}
+.todo-item.done span{text-decoration:line-through}
+.todo-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent);
+  cursor:pointer;flex-shrink:0}
+.todo-item span{flex:1;word-break:break-word}
+.todo-item .del{
+  width:24px;height:24px;border:none;border-radius:6px;background:transparent;
+  color:var(--text-mute);cursor:pointer;font-size:14px;
+}
+.todo-item .del:hover{background:rgba(229,72,77,.2);color:#ff6b6b}
+.todo-empty{text-align:center;color:var(--text-mute);padding:30px;font-size:12.5px}
+
+/* ==================== APP: SYSMON ==================== */
+.sysmon{padding:16px;height:100%;display:flex;flex-direction:column;gap:14px;
+  background:var(--bg-input);overflow-y:auto}
+.sm-card{background:var(--bg-hover);border-radius:10px;padding:12px 14px}
+.sm-card-title{font-size:11px;text-transform:uppercase;letter-spacing:1.1px;
+  color:var(--text-mute);margin-bottom:8px;font-weight:600;display:flex;justify-content:space-between}
+.sm-card-title b{color:var(--accent);font-size:13px;text-transform:none;letter-spacing:0}
+.sm-bar{height:8px;background:var(--bg-input);border-radius:5px;overflow:hidden}
+.sm-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),#a855f7);
+  border-radius:5px;transition:width .4s ease}
+.sm-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);
+  padding:4px 0;border-bottom:1px solid var(--stroke)}
+.sm-row:last-child{border-bottom:none}
+.sm-row span:last-child{color:var(--text);font-weight:500}
+.sm-graph{height:70px;background:var(--bg-input);border-radius:8px;overflow:hidden;position:relative}
+.sm-graph canvas{display:block;width:100%;height:100%}
+
+/* ==================== APP: SETTINGS ==================== */
+.settings{padding:0;height:100%;display:flex;background:var(--bg-input);overflow:hidden}
+.settings-side{
+  width:140px;flex-shrink:0;background:var(--bg-hover);padding:10px 6px;
+  border-right:1px solid var(--stroke);overflow-y:auto;
+}
+.set-nav{
+  padding:9px 12px;border-radius:8px;font-size:12.5px;color:var(--text-dim);
+  cursor:pointer;display:flex;align-items:center;gap:8px;margin-bottom:2px;
+}
+.set-nav:hover{background:var(--bg-active);color:var(--text)}
+.set-nav.on{background:var(--accent);color:#fff}
+.settings-main{flex:1;overflow-y:auto;padding:16px 18px}
+.set-group{margin-bottom:22px}
+.set-group:last-child{margin-bottom:0}
+.set-group h3{font-size:11px;text-transform:uppercase;letter-spacing:1.2px;
+  color:var(--text-mute);margin-bottom:10px;font-weight:600}
+.set-row{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--stroke);font-size:13px;gap:12px}
+.set-row:last-child{border-bottom:none}
+.set-row .lbl{color:var(--text)}
+.set-row .lbl small{display:block;color:var(--text-mute);font-size:11px;margin-top:2px}
+.set-ctrl{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.set-btn{padding:6px 12px;border-radius:7px;border:1px solid var(--stroke);
+  background:transparent;color:var(--text-dim);cursor:pointer;font-size:11.5px}
+.set-btn:hover{background:var(--bg-active);color:var(--text)}
+.set-btn.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.wp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+.wp{aspect-ratio:16/10;border-radius:8px;border:2px solid transparent;cursor:pointer;
+  transition:.15s;position:relative;overflow:hidden}
+.wp:hover{transform:scale(1.05)}
+.wp.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.wp.solid{display:flex;align-items:center;justify-content:center;font-size:9px;
+  color:rgba(255,255,255,.6);font-weight:600}
+.acc-row{display:flex;gap:9px;margin-top:8px;flex-wrap:wrap}
+.acc{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;
+  transition:.15s}
+.acc:hover{transform:scale(1.1)}
+.acc.sel{border-color:#fff;box-shadow:0 0 0 2px var(--accent)}
+.wp-custom{display:flex;gap:8px;margin-top:8px}
+.wp-custom input{
+  flex:1;height:32px;border:1px solid var(--stroke);border-radius:8px;
+  background:var(--bg-input);color:var(--text);padding:0 10px;font-size:12px;outline:none;
+}
+.wp-custom button{
+  height:32px;padding:0 14px;border-radius:8px;border:none;background:var(--accent);
+  color:#fff;cursor:pointer;font-size:12px;
+}
+
+/* ==================== APP: ABOUT ==================== */
+.about-box{text-align:center;padding:26px 20px}
+.about-box .big{font-size:46px;font-weight:800;letter-spacing:-2px;
+  background:linear-gradient(90deg,#4f8cff,#a855f7,#ec4899);
+  -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6px}
+.about-box .ver{font-size:12px;color:var(--text-mute);margin-bottom:18px}
+.about-box .row{display:flex;justify-content:space-between;padding:7px 4px;
+  border-bottom:1px solid var(--stroke);font-size:12.5px}
+.about-box .row:last-child{border-bottom:none}
+.about-box .row span:first-child{color:var(--text-mute)}
+.about-box .row span:last-child{color:var(--text)}
+</style>
+</head>
+<body>
+
+<div id="boot">
+  <div class="logo">WebOS</div>
+  <div class="bootbar"><i></i></div>
+  <div class="boottext">Загрузка системы · v2.0</div>
+</div>
+
+<div id="desktop">
+  <div id="deskicons"></div>
+  <div id="windowLayer"></div>
+</div>
+
+<div id="taskbar">
+  <button id="startBtn">⊞ <span>Пуск</span></button>
+  <div id="tasks"></div>
+  <div id="tray">
+    <button class="tray-btn" id="lockBtn" title="Заблокировать">🔒</button>
+    <button class="tray-btn" id="notifBtn" title="Уведомления">🔔</button>
+    <button class="tray-btn" id="clock">--:--</button>
+  </div>
+</div>
+
+<div id="startMenu"></div>
+<div id="ctxMenu"></div>
+<div id="notifications"></div>
+
+<div id="lockScreen">
+  <div class="lock-time" id="lockTime">--:--</div>
+  <div class="lock-date" id="lockDate">--</div>
+  <div class="lock-user">
+    <div class="lock-avatar">👤</div>
+    <div class="lock-name">user</div>
+  </div>
+  <div class="lock-hint">Нажмите, чтобы разблокировать</div>
+</div>
+
+<div id="cmdPalette">
+  <div class="cp-box">
+    <input class="cp-input" placeholder="Поиск приложений, файлов, команд..." autocomplete="off">
+    <div class="cp-results"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   УТИЛИТЫ И СОСТОЯНИЕ
+   ========================================================= */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('webos2-' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('webos2-' + k, JSON.stringify(v)); } catch (e) {} }
+};
+
+const state = {
+  zIndex: 100,
+  accent: LS.get('accent', '#4f8cff'),
+  wallpaper: LS.get('wallpaper', 'g1'),
+  theme: LS.get('theme', 'dark'),
+  fontSize: LS.get('fontSize', 'normal'),
+  iconSize: LS.get('iconSize', 'normal'),
+  taskbarPos: LS.get('taskbarPos', 'bottom'),
+  animations: LS.get('animations', true),
+  transparency: LS.get('transparency', 94),
+  winCounter: 0
+};
+
+const WALLPAPERS = {
+  g1: { type: 'grad', css: 'linear-gradient(135deg,#1a1a2e,#16213e 50%,#0f3460)' },
+  g2: { type: 'grad', css: 'linear-gradient(135deg,#0f2027,#203a43,#2c5364)' },
+  g3: { type: 'grad', css: 'linear-gradient(135deg,#42275a,#734b6d)' },
+  g4: { type: 'grad', css: 'linear-gradient(135deg,#232526,#414345)' },
+  g5: { type: 'grad', css: 'linear-gradient(135deg,#0b486b,#f56217)' },
+  g6: { type: 'grad', css: 'linear-gradient(135deg,#134e5e,#71b280)' },
+  g7: { type: 'grad', css: 'linear-gradient(135deg,#1f1c2c,#928dab)' },
+  g8: { type: 'grad', css: 'linear-gradient(135deg,#000428,#004e92)' },
+  g9: { type: 'grad', css: 'linear-gradient(135deg,#3a1c71,#d76d77,#ffaf7b)' },
+  g10: { type: 'grad', css: 'linear-gradient(135deg,#141e30,#243b55)' },
+  g11: { type: 'grad', css: 'linear-gradient(135deg,#2c3e50,#4ca1af)' },
+  g12: { type: 'grad', css: 'linear-gradient(135deg,#1e3c72,#2a5298)' },
+  s1: { type: 'solid', css: '#0f0f1a' },
+  s2: { type: 'solid', css: '#1a1a2e' },
+  s3: { type: 'solid', css: '#0a3d62' },
+  s4: { type: 'solid', css: '#2d3436' }
+};
+
+/* =========================================================
+   ТЕМА И ОФОРМЛЕНИЕ
+   ========================================================= */
+function applyTheme() {
+  document.documentElement.style.setProperty('--accent', state.accent);
+  document.body.className = '';
+  if (state.theme === 'light') document.body.classList.add('light');
+  if (state.theme === 'amoled') document.body.classList.add('amoled');
+  if (!state.animations) document.body.classList.add('no-anim');
+  if (state.iconSize === 'large') document.body.classList.add('icon-large');
+  if (state.taskbarPos === 'top') document.body.classList.add('taskbar-top');
+
+  const fs = { small: '12px', normal: '13px', large: '14.5px' }[state.fontSize] || '13px';
+  document.documentElement.style.setProperty('--font-size', fs);
+  document.documentElement.style.setProperty('--win-blur', (state.transparency / 100 * 30) + 'px');
+
+  const wp = WALLPAPERS[state.wallpaper];
+  const desk = $('#desktop');
+  if (wp) {
+    if (wp.type === 'grad') desk.style.background = wp.css;
+    else if (wp.type === 'solid') desk.style.background = wp.css;
+    else if (wp.type === 'url') {
+      desk.style.background = `url("${wp.css}") center/cover no-repeat`;
+    }
+  }
+}
+
+/* =========================================================
+   УВЕДОМЛЕНИЯ
+   ========================================================= */
+function notify(title, body, icon = 'ℹ️', duration = 4000) {
+  const box = $('#notifications');
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<div class="ti">${icon}</div>
+    <div class="tb"><div class="tt">${esc(title)}</div>
+    <div class="td">${esc(body)}</div></div>`;
+  box.appendChild(t);
+  const remove = () => {
+    t.classList.add('removing');
+    setTimeout(() => t.remove(), 220);
+  };
+  t.addEventListener('click', remove);
+  setTimeout(remove, duration);
+}
+
+/* =========================================================
+   ФАЙЛОВАЯ СИСТЕМА
+   ========================================================= */
+let fs = LS.get('fs', null);
+if (!fs) {
+  fs = {
+    '/': { type: 'dir' },
+    '/Documents': { type: 'dir' },
+    '/Documents/readme.txt': { type: 'file',
+      content: 'Добро пожаловать в WebOS 2.0!\n\nНовое в этой версии:\n• Расширенный терминал (40+ команд)\n• neofetch с логотипом OS\n• Темы: тёмная / светлая / AMOLED\n• Новые приложения: Paint, Clock, Todo, SysMon, Minesweeper\n• Уведомления, Lock Screen, Command Palette (Ctrl+K)\n\nПопробуйте в терминале:\n  neofetch\n  help\n  apt install package\n  cowsay "WebOS"' },
+    '/Documents/заметки.txt': { type: 'file',
+      content: 'TODO:\n1. Изучить терминал — help\n2. Сменить обои в настройках\n3. Сыграть в сапёр\n4. Нарисовать что-нибудь в Paint' },
+    '/Projects': { type: 'dir' },
+    '/Projects/hello.js': { type: 'file',
+      content: 'console.log("Привет из WebOS!");' }
+  };
+  LS.set('fs', fs);
+}
+const saveFS = () => LS.set('fs', fs);
+
+function parentOf(p) { const i = p.lastIndexOf('/'); return i <= 0 ? '/' : p.slice(0, i); }
+function baseName(p) { return p.slice(p.lastIndexOf('/') + 1); }
+function exists(p) { return Object.prototype.hasOwnProperty.call(fs, p); }
+function isDir(p) { return exists(p) && fs[p].type === 'dir'; }
+
+function normalize(p) {
+  const parts = String(p).split('/').filter(Boolean);
+  const out = [];
+  for (const part of parts) {
+    if (part === '.') continue;
+    if (part === '..') out.pop();
+    else out.push(part);
+  }
+  return '/' + out.join('/');
+}
+
+function resolvePath(p, cwd) {
+  if (!p) return cwd;
+  return normalize(p.startsWith('/') ? p : cwd + '/' + p);
+}
+
+function listDir(p) {
+  return Object.keys(fs).filter(k => k !== '/' && parentOf(k) === p).sort((a, b) => {
+    const da = isDir(a), db = isDir(b);
+    if (da !== db) return da ? -1 : 1;
+    return a.localeCompare(b, 'ru');
+  });
+}
+
+function mkdirp(p) {
+  p = normalize(p);
+  const parts = p.split('/').filter(Boolean);
+  let cur = '';
+  for (const part of parts) {
+    cur += '/' + part;
+    if (!exists(cur)) fs[cur] = { type: 'dir' };
+  }
+  saveFS();
+}
+
+function writeFile(p, content) {
+  p = normalize(p);
+  mkdirp(parentOf(p));
+  fs[p] = { type: 'file', content: String(content) };
+  saveFS();
+}
+
+function removePath(p) {
+  p = normalize(p);
+  if (p === '/') return;
+  Object.keys(fs).forEach(k => {
+    if (k === p || k.startsWith(p + '/')) delete fs[k];
+  });
+  saveFS();
+}
+
+function stat(p) {
+  if (!exists(p)) return null;
+  const isD = isDir(p);
+  return {
+    size: isD ? 4096 : (fs[p].content || '').length,
+    type: isD ? 'd' : 'f'
+  };
+}
+
+/* =========================================================
+   ОКОННЫЙ МЕНЕДЖЕР
+   ========================================================= */
+const openWindows = {};
+const windowLayer = $('#windowLayer');
+const tasksBar = $('#tasks');
+
+function focusWindow(id) {
+  const w = openWindows[id];
+  if (!w) return;
+  w.el.style.zIndex = ++state.zIndex;
+  Object.keys(openWindows).forEach(k => {
+    openWindows[k].el.classList.toggle('focused', k === id);
+  });
+  updateTasks();
+}
+
+function updateTasks() {
+  $$('.taskbtn').forEach(btn => {
+    const w = openWindows[btn.dataset.id];
+    btn.classList.toggle('active', !!w && !w.minimized && w.el.classList.contains('focused'));
+  });
+}
+
+function minimizeWindow(id) {
+  const w = openWindows[id];
+  if (!w) return;
+  w.minimized = true;
+  w.el.style.display = 'none';
+  updateTasks();
+}
+
+function unminimizeWindow(id) {
+  const w = openWindows[id];
+  if (!w) return;
+  w.minimized = false;
+  w.el.style.display = 'flex';
+  focusWindow(id);
+}
+
+function toggleMaximize(id) {
+  const w = openWindows[id];
+  if (!w) return;
+  const el = w.el;
+  const tbH = parseInt(getComputedStyle(document.documentElement)
+    .getPropertyValue('--taskbar-h'));
+  if (el.classList.contains('maximized')) {
+    el.classList.remove('maximized');
+    Object.assign(el.style, w.prevRect);
+    w.prevRect = null;
+  } else {
+    w.prevRect = { left: el.style.left, top: el.style.top,
+                   width: el.style.width, height: el.style.height };
+    el.classList.add('maximized');
+    Object.assign(el.style, {
+      left: '0px',
+      top: state.taskbarPos === 'top' ? tbH + 'px' : '0px',
+      width: '100%',
+      height: `calc(100% - ${tbH}px)`
+    });
+  }
+  focusWindow(id);
+}
+
+function closeWindow(id) {
+  const w = openWindows[id];
+  if (!w) return;
+  if (typeof w.cleanup === 'function') { try { w.cleanup(); } catch (e) {} }
+  w.el.remove();
+  if (w.taskBtn) w.taskBtn.remove();
+  delete openWindows[id];
+}
+
+function makeDraggable(el, handle, id) {
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  handle.addEventListener('pointerdown', e => {
+    if (e.target.closest('.tb-buttons')) return;
+    if (el.classList.contains('maximized')) return;
+    dragging = true;
+    sx = e.clientX; sy = e.clientY;
+    ox = el.offsetLeft; oy = el.offsetTop;
+    handle.setPointerCapture(e.pointerId);
+    focusWindow(id);
+    document.body.style.cursor = 'grabbing';
+  });
+  handle.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    let nx = ox + (e.clientX - sx);
+    let ny = oy + (e.clientY - sy);
+    ny = Math.max(0, Math.min(ny, window.innerHeight - 96));
+    nx = Math.max(-el.offsetWidth + 80, Math.min(nx, window.innerWidth - 80));
+    el.style.left = nx + 'px';
+    el.style.top = ny + 'px';
+  });
+  const stop = e => {
+    if (!dragging) return;
+    dragging = false;
+    document.body.style.cursor = '';
+    // Snap to edges
+    const x = el.offsetLeft, w = el.offsetWidth;
+    const vw = window.innerWidth;
+    const tbH = parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--taskbar-h'));
+    if (x < 8) {
+      el.style.left = '0px';
+      el.style.width = Math.floor(vw / 2) + 'px';
+      el.style.top = (state.taskbarPos === 'top' ? tbH : 0) + 'px';
+      el.style.height = `calc(100% - ${tbH}px)`;
+    } else if (x + w > vw - 8) {
+      el.style.left = Math.floor(vw / 2) + 'px';
+      el.style.width = Math.floor(vw / 2) + 'px';
+      el.style.top = (state.taskbarPos === 'top' ? tbH : 0) + 'px';
+      el.style.height = `calc(100% - ${tbH}px)`;
+    }
+  };
+  handle.addEventListener('pointerup', stop);
+  handle.addEventListener('pointercancel', stop);
+}
+
+function openApp(appId, opts) {
+  for (const id in openWindows) {
+    if (openWindows[id].appId === appId) {
+      if (openWindows[id].minimized) unminimizeWindow(id);
+      focusWindow(id);
+      if (opts && openWindows[id].handleOpen) openWindows[id].handleOpen(opts);
+      return;
+    }
+  }
+  const app = apps[appId];
+  if (!app) return;
+
+  const id = 'win' + (++state.winCounter);
+  const el = document.createElement('div');
+  el.className = 'window';
+  el.dataset.id = id;
+
+  const maxW = window.innerWidth - 40;
+  const maxH = window.innerHeight - 110;
+  const w = Math.min(app.w, maxW);
+  const h = Math.min(app.h, maxH);
+  const off = (state.winCounter % 6) * 26;
+  const left = Math.max(12, Math.round((window.innerWidth - w) / 2 - 110 + off));
+  const top = Math.max(12, Math.round((window.innerHeight - h) / 2 - 70 + off));
+
+  el.style.width = w + 'px';
+  el.style.height = h + 'px';
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+
+  el.innerHTML = `
+    <div class="titlebar">
+      <span class="ti">${app.icon}</span>
+      <span class="tt">${esc(app.title)}</span>
+      <div class="tb-buttons">
+        <button class="min" title="Свернуть">–</button>
+        <button class="max" title="Развернуть">□</button>
+        <button class="close" title="Закрыть">✕</button>
+      </div>
+    </div>
+    <div class="wbody"></div>`;
+  windowLayer.appendChild(el);
+
+  const body = $('.wbody', el);
+  const record = { appId, el, minimized: false, cleanup: null, taskBtn: null,
+                    handleOpen: null };
+  openWindows[id] = record;
+
+  $('.min', el).addEventListener('click', () => minimizeWindow(id));
+  $('.max', el).addEventListener('click', () => toggleMaximize(id));
+  $('.close', el).addEventListener('click', () => closeWindow(id));
+  el.addEventListener('pointerdown', () => focusWindow(id), true);
+  makeDraggable(el, $('.titlebar', el), id);
+
+  const taskBtn = document.createElement('button');
+  taskBtn.className = 'taskbtn';
+  taskBtn.dataset.id = id;
+  taskBtn.innerHTML = `<span>${app.icon}</span><span>${esc(app.title)}</span>`;
+  taskBtn.addEventListener('click', () => {
+    const win = openWindows[id];
+    if (!win) return;
+    if (win.minimized) unminimizeWindow(id);
+    else if (win.el.classList.contains('focused')) minimizeWindow(id);
+    else focusWindow(id);
+  });
+  tasksBar.appendChild(taskBtn);
+  record.taskBtn = taskBtn;
+
+  try {
+    const r = app.render(body, el, opts);
+    if (typeof r === 'function') record.cleanup = r;
+    else if (r && typeof r.cleanup === 'function') {
+      record.cleanup = r.cleanup;
+      if (typeof r.handleOpen === 'function') record.handleOpen = r.handleOpen;
+    }
+  } catch (err) {
+    body.innerHTML = `<div style="padding:20px;color:#ff6b6b">
+      Ошибка приложения: ${esc(err.message)}</div>`;
+  }
+
+  focusWindow(id);
+}
+
+/* =========================================================
+   ПРИЛОЖЕНИЯ
+   ========================================================= */
+const apps = {};
+
+/* ---------- Проводник ---------- */
+apps.files = {
+  title: 'Проводник', icon: '📁', w: 660, h: 450,
+  render(body) {
+    let cwd = '/';
+    body.innerHTML = `
+      <div class="fm-toolbar">
+        <button data-act="up">↑</button>
+        <button data-act="newdir">+ Папка</button>
+        <button data-act="newfile">+ Файл</button>
+        <input class="fm-path" value="/" readonly>
+      </div>
+      <div class="fm-list"></div>`;
+    const list = $('.fm-list', body);
+    const pathInput = $('.fm-path', body);
+
+    function refresh() {
+      pathInput.value = cwd;
+      const items = listDir(cwd);
+      if (!items.length) {
+        list.innerHTML = '<div class="fm-empty">Папка пуста</div>';
+        return;
+      }
+      list.innerHTML = items.map(p => {
+        const dir = isDir(p), name = baseName(p);
+        let icon = '📄';
+        if (dir) icon = '📁';
+        else if (/\.(txt|md|log)$/i.test(name)) icon = '📝';
+        else if (/\.(js|json|html|css)$/i.test(name)) icon = '📜';
+        else if (/\.(png|jpg|jpeg|gif|svg)$/i.test(name)) icon = '🖼️';
+        return `<div class="fm-row" data-path="${esc(p)}" data-dir="${dir}">
+          <span class="fi">${icon}</span><span>${esc(name)}</span></div>`;
+      }).join('');
+    }
+
+    list.addEventListener('dblclick', e => {
+      const row = e.target.closest('.fm-row');
+      if (!row) return;
+      const p = row.dataset.path;
+      if (row.dataset.dir === 'true') { cwd = p; refresh(); }
+      else {
+        openApp('notepad');
+        setTimeout(() => document.dispatchEvent(
+          new CustomEvent('open-file', { detail: { path: p } })), 60);
+      }
+    });
+
+    list.addEventListener('contextmenu', e => {
+      const row = e.target.closest('.fm-row');
+      if (!row) return;
+      e.preventDefault(); e.stopPropagation();
+      const p = row.dataset.path;
+      showContextMenu(e.clientX, e.clientY, [
+        { label: '📂 Открыть', action: () => {
+            if (isDir(p)) { cwd = p; refresh(); }
+            else {
+              openApp('notepad');
+              setTimeout(() => document.dispatchEvent(
+                new CustomEvent('open-file', { detail: { path: p } })), 60);
+            }
+          } },
+        { sep: true },
+        { label: '✏️ Переименовать', action: () => {
+            const nn = prompt('Новое имя:', baseName(p));
+            if (!nn || !nn.trim()) return;
+            const target = (parentOf(p) === '/' ? '' : parentOf(p)) + '/' + nn.trim();
+            if (exists(target)) { alert('Уже существует'); return; }
+            const content = isDir(p) ? null : fs[p].content;
+            if (isDir(p)) { mkdirp(target); removePath(p); }
+            else { writeFile(target, content); removePath(p); }
+            refresh();
+          } },
+        { label: '🗑 Удалить', action: () => {
+            if (confirm('Удалить «' + baseName(p) + '»?')) { removePath(p); refresh(); }
+          } }
+      ]);
+    });
+
+    $('.fm-toolbar', body).addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      if (act === 'up') { if (cwd !== '/') { cwd = parentOf(cwd); refresh(); } }
+      else if (act === 'newdir') {
+        const n = prompt('Имя папки:');
+        if (n && n.trim()) { mkdirp((cwd === '/' ? '' : cwd) + '/' + n.trim()); refresh(); }
+      } else if (act === 'newfile') {
+        const n = prompt('Имя файла:', 'файл.txt');
+        if (n && n.trim()) {
+          const full = (cwd === '/' ? '' : cwd) + '/' + n.trim();
+          if (!exists(full)) writeFile(full, '');
+          refresh();
+        }
+      }
+    });
+
+    refresh();
+  }
+};
+
+/* ---------- Блокнот ---------- */
+apps.notepad = {
+  title: 'Блокнот', icon: '📝', w: 580, h: 420,
+  render(body, win) {
+    body.innerHTML = `
+      <div class="np-toolbar">
+        <button data-act="save">💾 Сохранить</button>
+        <button data-act="saveas">💾 Сохранить как</button>
+        <button data-act="open">📂 Открыть</button>
+        <button data-act="new">🆕 Новый</button>
+      </div>
+      <textarea class="np-area" spellcheck="false" placeholder="Начните печатать…"></textarea>`;
+    const area = $('.np-area', body);
+    let currentPath = null;
+    const setTitle = () => {
+      $('.tt', win).textContent = 'Блокнот — ' + (currentPath ? baseName(currentPath) : 'Без имени');
+    };
+    const loadFile = p => {
+      if (!exists(p) || isDir(p)) { alert('Файл не найден: ' + p); return; }
+      area.value = fs[p].content || '';
+      currentPath = p;
+      setTitle();
+    };
+    const handler = e => loadFile(e.detail.path);
+    document.addEventListener('open-file', handler);
+    const save = p => { writeFile(p, area.value); currentPath = p; setTitle();
+      notify('Сохранено', p, '💾', 2000); };
+
+    $('.np-toolbar', body).addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const act = btn.dataset.act;
+      if (act === 'save') {
+        let p = currentPath;
+        if (!p) { const n = prompt('Сохранить как:', '/Documents/заметка.txt');
+          if (!n) return; p = resolvePath(n, '/'); }
+        save(p);
+      } else if (act === 'saveas') {
+        const n = prompt('Сохранить как:', currentPath || '/Documents/заметка.txt');
+        if (n) save(resolvePath(n, '/'));
+      } else if (act === 'open') {
+        const p = prompt('Путь к файлу:', '/Documents/readme.txt');
+        if (p) loadFile(resolvePath(p, '/'));
+      } else if (act === 'new') {
+        currentPath = null; area.value = ''; setTitle();
+      }
+    });
+
+    setTitle();
+    setTimeout(() => area.focus(), 100);
+    return { cleanup: () => document.removeEventListener('open-file', handler),
+             handleOpen: o => { if (o && o.path) loadFile(o.path); } };
+  }
+};
+
+/* ---------- Калькулятор ---------- */
+apps.calc = {
+  title: 'Калькулятор', icon: '🧮', w: 300, h: 430,
+  render(body) {
+    body.innerHTML = `
+      <div class="calc">
+        <div class="calc-display">
+          <div class="calc-expr"></div>
+          <div class="calc-val">0</div>
+        </div>
+        <div class="calc-grid">
+          <button class="fn" data-k="C">C</button>
+          <button class="fn" data-k="back">⌫</button>
+          <button class="fn" data-k="%">%</button>
+          <button class="op" data-k="/">÷</button>
+          <button data-k="7">7</button><button data-k="8">8</button>
+          <button data-k="9">9</button><button class="op" data-k="*">×</button>
+          <button data-k="4">4</button><button data-k="5">5</button>
+          <button data-k="6">6</button><button class="op" data-k="-">−</button>
+          <button data-k="1">1</button><button data-k="2">2</button>
+          <button data-k="3">3</button><button class="op" data-k="+">+</button>
+          <button data-k="(">(</button><button data-k=")">)</button>
+          <button data-k=".">.</button><button class="eq" data-k="=">=</button>
+        </div>
+      </div>`;
+    const exprEl = $('.calc-expr', body);
+    const valEl = $('.calc-val', body);
+    let expr = '';
+    const render = () => { exprEl.textContent = expr; valEl.textContent = expr || '0'; };
+    const evaluate = () => {
+      if (!expr) return;
+      if (!/^[0-9+\-*/.() %]+$/.test(expr)) { valEl.textContent = 'Ошибка'; return; }
+      try {
+        const r = Function('"use strict";return (' + expr + ')')();
+        if (typeof r !== 'number' || !isFinite(r)) throw 0;
+        expr = String(Math.round(r * 1e10) / 1e10);
+        valEl.textContent = expr;
+      } catch (e) { valEl.textContent = 'Ошибка'; expr = ''; }
+    };
+    $('.calc-grid', body).addEventListener('click', e => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      const k = btn.dataset.k;
+      if (k === 'C') { expr = ''; render(); return; }
+      if (k === 'back') { expr = expr.slice(0, -1); render(); return; }
+      if (k === '=') { evaluate(); return; }
+      if (k === '%') { expr += '/100'; render(); return; }
+      expr += k; render();
+    });
+    const onKey = e => {
+      const winEl = body.closest('.window');
+      if (!winEl || !winEl.classList.contains('focused')) return;
+      const k = e.key;
+      if (/^[0-9+\-*/.()%]$/.test(k)) { expr += k; render(); e.preventDefault(); }
+      else if (k === 'Enter') { evaluate(); e.preventDefault(); }
+      else if (k === 'Backspace') { expr = expr.slice(0, -1); render(); e.preventDefault(); }
+      else if (k === 'Escape') { expr = ''; render(); }
+    };
+    document.addEventListener('keydown', onKey);
+    render();
+    return () => document.removeEventListener('keydown', onKey);
+  }
+};
+
+/* ---------- Терминал (расширенный) ---------- */
+apps.term = {
+  title: 'Терминал', icon: '⌨️', w: 720, h: 460,
+  render(body) {
+    body.innerHTML = `
+      <div class="term">
+        <div class="term-out"></div>
+        <div class="term-line">
+          <span class="term-prompt">user@webos:~$</span>
+          <input class="term-in" spellcheck="false" autocomplete="off">
+        </div>
+      </div>`;
+    const term = $('.term', body);
+    const out = $('.term-out', body);
+    const input = $('.term-in', body);
+    const promptEl = $('.term-prompt', body);
+    let cwd = '/';
+    const history = [];
+    let hIndex = 0;
+    const aliases = {};
+    const env = { HOME: '/', USER: 'user', SHELL: '/bin/webterm', TERM: 'webterm-256color',
+                  PATH: '/bin:/usr/bin:/usr/local/bin' };
+    const startTime = Date.now();
+
+    const print = (html, cls) => {
+      const d = document.createElement('div');
+      if (cls) d.className = cls;
+      d.innerHTML = html;
+      out.appendChild(d);
+      out.scrollTop = out.scrollHeight;
+    };
+    const printLines = (lines, cls) => lines.forEach(l => print(l, cls));
+    const prompt = () => `user@webos:${cwd === '/' ? '~' : cwd}$`;
+
+    // ===== NEOFETCH LOGO =====
+    const LOGO = [
+      '    ╔══════════════════════════════╗',
+      '    ║   ██╗    ██╗███████╗██████╗   ║',
+      '    ║   ██║    ██║██╔════╝██╔══██╗  ║',
+      '    ║   ██║ █╗ ██║█████╗  ██████╔╝  ║',
+      '    ║   ██║███╗██║██╔══╝  ██╔══██╗  ║',
+      '    ║   ╚███╔███╔╝███████╗██████╔╝  ║',
+      '    ║    ╚══╝╚══╝ ╚══════╝╚═════╝   ║',
+      '    ║                              ║',
+      '    ║      ██████╗ ███████╗        ║',
+      '    ║     ██╔═══██╗██╔════╝        ║',
+      '    ║     ██║   ██║███████╗        ║',
+      '    ║     ██║   ██║╚════██║        ║',
+      '    ║     ╚██████╔╝███████║        ║',
+      '    ║      ╚═════╝ ╚══════╝        ║',
+      '    ╚══════════════════════════════╝'
+    ];
+
+    print('<span class="term-ok">WebOS Terminal v2.0</span> · <span class="term-dim">введите</span> <span class="term-hi">help</span> <span class="term-dim">для списка команд,</span> <span class="term-hi">neofetch</span> <span class="term-dim">для информации о системе</span>');
+    print('');
+
+    term.addEventListener('click', () => { if (!window.getSelection().toString()) input.focus(); });
+
+    function cowsay(text) {
+      if (!text) text = 'Hello, WebOS!';
+      const lines = [];
+      let cur = '';
+      text.split(' ').forEach(w => {
+        if ((cur + ' ' + w).length > 36) { lines.push(cur.trim()); cur = w; }
+        else cur += ' ' + w;
+      });
+      if (cur.trim()) lines.push(cur.trim());
+      const width = Math.max(...lines.map(l => l.length), 10);
+      const top = ' ' + '_'.repeat(width + 2);
+      const bottom = ' ' + '-'.repeat(width + 2);
+      let result = [top];
+      if (lines.length === 1) {
+        result.push('< ' + lines[0].padEnd(width) + ' >');
+      } else {
+        lines.forEach((l, i) => {
+          let pre = '|', post = '|';
+          if (i === 0) pre = '/';
+          else if (i === lines.length - 1) pre = '\\';
+          result.push(pre + ' ' + l.padEnd(width) + ' ' + post);
+        });
+      }
+      result.push(bottom);
+      result.push('        \\   ^__^');
+      result.push('         \\  (oo)\\_______');
+      result.push('            (__)\\       )\\/\\');
+      result.push('                ||----w |');
+      result.push('                ||     ||');
+      return result.join('\n');
+    }
+
+    function figlet(text) {
+      const map = {
+        'A':['  A  ',' A A ','AAAAA','A   A','A   A'],
+        'B':['BBBB ','B   B','BBBB ','B   B','BBBB '],
+        'C':[' CCCC','C    ','C    ','C    ',' CCCC'],
+        'D':['DDDD ','D   D','D   D','D   D','DDDD '],
+        'E':['EEEEE','E    ','EEEE ','E    ','EEEEE'],
+        'F':['FFFFF','F    ','EEEE ','E    ','E    '],
+        'G':[' GGGG','G    ','G  GG','G   G',' GGGG'],
+        'H':['H   H','H   H','HHHHH','H   H','H   H'],
+        'I':['IIIII','  I  ','  I  ','  I  ','IIIII'],
+        'J':['JJJJJ','   J ','   J ','J  J ',' JJ  '],
+        'K':['K   K','K  K ','KKK  ','K  K ','K   K'],
+        'L':['L    ','L    ','L    ','L    ','LLLLL'],
+        'M':['M   M','MM MM','M M M','M   M','M   M'],
+        'N':['N   N','NN  N','N N N','N  NN','N   N'],
+        'O':[' OOO ','O   O','O   O','O   O',' OOO '],
+        'P':['PPPP ','P   P','PPPP ','P    ','P    '],
+        'Q':[' QQQ ','Q   Q','Q   Q','Q  Q ',' QQ Q'],
+        'R':['RRRR ','R   R','RRRR ','R R  ','R  RR'],
+        'S':[' SSSS','S    ',' SSS ','    S','SSSS '],
+        'T':['TTTTT','  T  ','  T  ','  T  ','  T  '],
+        'U':['U   U','U   U','U   U','U   U',' UUU '],
+        'V':['V   V','V   V','V   V',' V V ','  V  '],
+        'W':['W   W','W   W','W W W','WW WW','W   W'],
+        'X':['X   X',' X X ','  X  ',' X X ','X   X'],
+        'Y':['Y   Y',' Y Y ','  Y  ','  Y  ','  Y  '],
+        'Z':['ZZZZZ','   Z ','  Z  ',' Z   ','ZZZZZ'],
+        '0':[' 000 ','0   0','0   0','0   0',' 000 '],
+        '1':['  1  ',' 11  ','  1  ','  1  ','11111'],
+        '2':[' 222 ','2   2','   2 ','  2  ','22222'],
+        '3':['3333 ','   3 ',' 333 ','   3 ','3333 '],
+        '4':['4  4 ','4  4 ','44444','   4 ','   4 '],
+        '5':['55555','5    ','5555 ','    5','5555 '],
+        '6':[' 666 ','6    ','6666 ','6   6',' 666 '],
+        '7':['77777','    7','   7 ','  7  ','  7  '],
+        '8':[' 888 ','8   8',' 888 ','8   8',' 888 '],
+        '9':[' 999 ','9   9',' 9999','    9',' 999 '],
+        ' ':['     ','     ','     ','     ','     ']
+      };
+      const chars = text.toUpperCase().split('').filter(c => map[c]);
+      if (!chars.length) return text;
+      const lines = ['','','','',''];
+      chars.forEach(c => {
+        const m = map[c];
+        for (let i = 0; i < 5; i++) lines[i] += m[i] + ' ';
+      });
+      return lines.join('\n');
+    }
+
+    function fortune() {
+      const quotes = [
+        '"Всё гениальное — просто."',
+        '"Программы должны быть написаны так, чтобы их могли читать люди."',
+        '"Сначала заставь работать, потом — правильно, потом — быстро."',
+        '"Преждевременная оптимизация — корень всех зол."',
+        '"Простота — залог надёжности."',
+        '"Talk is cheap. Show me the code." — Linus Torvalds',
+        '"Единственный способ учиться — писать код."',
+        '"Баг — это не ошибка, это фича."',
+        '"Хороший код — это самодокументируемый код."',
+        '"Сложность убивает. Она высасывает жизнь из разработчиков."'
+      ];
+      return quotes[Math.floor(Math.random() * quotes.length)];
+    }
+
+    function tree(p, prefix) {
+      if (prefix === undefined) prefix = '';
+      const items = listDir(p);
+      items.forEach((item, i) => {
+        const last = i === items.length - 1;
+        const branch = last ? '└── ' : '├── ';
+        const name = baseName(item);
+        print(prefix + branch + (isDir(item)
+          ? '<span class="term-hi">' + esc(name) + '/</span>' : esc(name)));
+        if (isDir(item)) tree(item, prefix + (last ? '    ' : '│   '));
+      });
+    }
+
+    function grep(args, fromContent) {
+      const pattern = args[0];
+      if (!pattern) return { err: 'grep: укажите шаблон' };
+      const src = fromContent !== undefined ? fromContent : (args[1] ? (() => {
+        const p = resolvePath(args[1], cwd);
+        if (!exists(p) || isDir(p)) return null;
+        return fs[p].content || '';
+      })() : null);
+      if (src === null) return { err: 'grep: файл не найден' };
+      const lines = src.split('\n');
+      const re = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+      const found = lines.filter(l => re.test(l));
+      return { lines: found, count: found.length };
+    }
+
+    const commands = {
+      help: () => {
+        printLines([
+          '<span class="term-hi">━━━ WebOS Shell · Команды ━━━</span>',
+          '',
+          '<span class="term-yellow">Навигация и файлы</span>',
+          '  ls [путь]         — список файлов      cd <путь>        — сменить папку',
+          '  pwd               — текущий путь       tree [путь]      — дерево',
+          '  cat <файл>        — показать файл      head/tail <файл> — первые/последние строки',
+          '  touch <файл>      — создать файл       mkdir <папка>    — создать папку',
+          '  rm <путь>         — удалить            cp <a> <b>       — копировать',
+          '  mv <a> <b>        — переместить        find <путь> <шаблон> — поиск',
+          '  grep <шаблон> <файл> — поиск по тексту  wc <файл>        — посчитать строки',
+          '',
+          '<span class="term-yellow">Система</span>',
+          '  uname             — информация о ядре   uptime           — время работы',
+          '  whoami            — пользователь        hostname         — имя хоста',
+          '  date              — дата и время        cal              — календарь',
+          '  df                — диски               free             — память',
+          '  ps                — процессы           top              — монитор',
+          '  du <путь>         — размер              env              — переменные',
+          '  history           — история команд      alias            — псевдонимы',
+          '',
+          '<span class="term-yellow">Пакеты и сеть</span>',
+          '  apt install <pkg> — установить пакет     apt list         — список пакетов',
+          '  ping <host>       — пинг                curl <url>       — запрос',
+          '  wget <url>        — скачать             ifconfig         — интерфейсы',
+          '',
+          '<span class="term-yellow">Утилиты</span>',
+          '  echo <текст>      — вывод               calc <выражение> — калькулятор',
+          '  neofetch          — инфо о системе      figlet <текст>   — большие буквы',
+          '  cowsay <текст>    — корова              fortune          — цитата',
+          '  sleep <сек>       — пауза               time <команда>   — замер',
+          '  clear             — очистить экран      exit             — закрыть',
+          '',
+          '<span class="term-yellow">WebOS-специфичные</span>',
+          '  open <app>        — запустить приложение apps             — список приложений',
+          '  win               — окна                notify <текст>   — уведомление',
+          '  theme <имя>       — dark/light/amoled   wallpaper <имя>  — обои',
+          '  lock              — блокировка          reboot           — перезагрузка',
+          '  users             — пользователи        groups           — группы',
+          '  sudo <команда>    — с sudo              exit             — закрыть'
+        ]);
+      },
+
+      man: args => {
+        if (!args[0]) return print('man: укажите команду. Пример: man ls', 'term-err');
+        if (commands[args[0]]) {
+          print('<span class="term-hi">' + args[0] + '(1)</span> — команда WebOS Shell');
+          print('<span class="term-dim">Описание:</span> используйте <span class="term-hi">help</span> для списка всех команд.');
+          print('<span class="term-dim">Синтаксис:</span> ' + args[0] + ' [аргументы]');
+        } else print('man: команда не найдена: ' + args[0], 'term-err');
+      },
+
+      ls: args => {
+        const target = resolvePath(args[0] || '.', cwd);
+        if (!exists(target)) return print('ls: нет такого пути: ' + target, 'term-err');
+        if (!isDir(target)) return print(baseName(target));
+        const items = listDir(target);
+        if (!items.length) return print('<span class="term-dim">(пусто)</span>');
+        print(items.map(p => {
+          const name = baseName(p);
+          return isDir(p) ? '<span class="term-hi">' + esc(name) + '/</span>' : esc(name);
+        }).join('   '));
+      },
+
+      ll: () => commands.ls([]),
+      dir: () => commands.ls([]),
+
+      cd: args => {
+        const target = resolvePath(args[0] || '/', cwd);
+        if (!exists(target)) return print('cd: нет такой папки: ' + target, 'term-err');
+        if (!isDir(target)) return print('cd: не папка: ' + target, 'term-err');
+        cwd = target;
+        promptEl.textContent = prompt();
+      },
+
+      pwd: () => print(cwd),
+
+      cat: args => {
+        if (!args[0]) return print('cat: укажите файл', 'term-err');
+        const target = resolvePath(args[0], cwd);
+        if (!exists(target)) return print('cat: файл не найден: ' + target, 'term-err');
+        if (isDir(target)) return print('cat: это папка', 'term-err');
+        print(esc(fs[target].content || ''));
+      },
+
+      head: args => {
+        if (!args[0]) return print('head: укажите файл', 'term-err');
+        const target = resolvePath(args[0], cwd);
+        if (!exists(target) || isDir(target)) return print('head: файл не найден', 'term-err');
+        const lines = (fs[target].content || '').split('\n').slice(0, 10);
+        print(esc(lines.join('\n')));
+      },
+
+      tail: args => {
+        if (!args[0]) return print('tail: укажите файл', 'term-err');
+        const target = resolvePath(args[0], cwd);
+        if (!exists(target) || isDir(target)) return print('tail: файл не найден', 'term-err');
+        const lines = (fs[target].content || '').split('\n').slice(-10);
+        print(esc(lines.join('\n')));
+      },
+
+      touch: args => {
+        if (!args[0]) return print('touch: укажите имя', 'term-err');
+        const target = resolvePath(args[0], cwd);
+        if (!exists(target)) writeFile(target, '');
+        print('Создан: ' + esc(target), 'term-ok');
+      },
+
+      mkdir: args => {
+        if (!args[0]) return print('mkdir: укажите имя', 'term-err');
+        mkdirp(resolvePath(args[0], cwd));
+        print('Папка создана: ' + esc(resolvePath(args[0], cwd)), 'term-ok');
+      },
+
+      rmdir: args => commands.rm(args),
+
+      rm: args => {
+        if (!args[0]) return print('rm: укажите путь', 'term-err');
+        const target = resolvePath(args[0], cwd);
+        if (!exists(target)) return print('rm: не найдено: ' + target, 'term-err');
+        if (target === '/') return print('rm: нельзя удалить корень', 'term-err');
+        removePath(target);
+        print('Удалено: ' + esc(target), 'term-ok');
+      },
+
+      cp: args => {
+        if (args.length < 2) return print('cp: cp <источник> <назначение>', 'term-err');
+        const src = resolvePath(args[0], cwd);
+        const dst = resolvePath(args[1], cwd);
+        if (!exists(src) || isDir(src)) return print('cp: источник не найден', 'term-err');
+        writeFile(dst, fs[src].content);
+        print('Скопировано: ' + esc(src) + ' → ' + esc(dst), 'term-ok');
+      },
+
+      mv: args => {
+        if (args.length < 2) return print('mv: mv <источник> <назначение>', 'term-err');
+        const src = resolvePath(args[0], cwd);
+        const dst = resolvePath(args[1], cwd);
+        if (!exists(src)) return print('mv: источник не найден', 'term-err');
+        if (isDir(src)) return print('mv: перемещение папок не поддерживается', 'term-err');
+        writeFile(dst, fs[src].content);
+        removePath(src);
+        print('Перемещено: ' + esc(src) + ' → ' + esc(dst), 'term-ok');
+      },
+
+      find: args => {
+        if (!args[0]) return print('find: укажите путь и шаблон', 'term-err');
+        const target = resolvePath(args[0], cwd);
+        const pat = args[1] || '*';
+        const re = new RegExp('^' + pat.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+          .replace(/\*/g, '.*').replace(/\?/g, '.') + '$', 'i');
+        const all = Object.keys(fs).filter(k => k.startsWith(target === '/' ? '/' : target + '/'));
+        const found = all.filter(k => re.test(baseName(k)));
+        if (!found.length) return print('<span class="term-dim">Ничего не найдено</span>');
+        found.forEach(f => print(esc(f)));
+      },
+
+      grep: args => {
+        const r = grep(args);
+        if (r.err) return print(r.err, 'term-err');
+        if (!r.count) return print('<span class="term-dim">Нет совпадений</span>');
+        r.lines.forEach(l => {
+          print(esc(l).replace(
+            new RegExp('(' + args[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'),
+            '<span class="term-yellow">$1</span>'));
+        });
+      },
+
+      wc: args => {
+        if (!args[0]) return print('wc: укажите файл', 'term-err');
+        const p = resolvePath(args[0], cwd);
+        if (!exists(p) || isDir(p)) return print('wc: файл не найден', 'term-err');
+        const content = fs[p].content || '';
+        const lines = content.split('\n').length;
+        const words = content.split(/\s+/).filter(Boolean).length;
+        const chars = content.length;
+        print(`${lines}\t${words}\t${chars}\t${esc(baseName(p))}`);
+      },
+
+      echo: args => print(esc(args.join(' '))),
+      printf: args => print(esc(args.join(' '))),
+
+      date: () => print(new Date().toLocaleString('ru-RU', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', second: '2-digit'
+      })),
+
+      cal: () => {
+        const now = new Date();
+        const year = now.getFullYear(), month = now.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const months = ['Январь','Февраль','Март','Апрель','Май','Июнь',
+                        'Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+        let s = `     ${months[month]} ${year}\n`;
+        s += 'Пн Вт Ср Чт Пт Сб Вс\n';
+        let start = (firstDay + 6) % 7;
+        let line = '   '.repeat(start);
+        for (let d = 1; d <= daysInMonth; d++) {
+          if (d === now.getDate()) line += '[' + String(d).padStart(2) + ']';
+          else line += ' ' + String(d).padStart(2) + ' ';
+          if ((start + d) % 7 === 0) { s += line + '\n'; line = ''; }
+        }
+        if (line) s += line + '\n';
+        print(esc(s));
+      },
+
+      whoami: () => print('user'),
+      id: () => print('uid=1000(user) gid=1000(user) groups=1000(user),27(sudo)'),
+      users: () => print('user\nadmin\nguest'),
+      groups: () => print('user sudo docker'),
+      hostname: () => print('webos'),
+      uname: () => print('WebOS 2.0 webterm-1.0 x86_64 (JavaScript)'),
+      uptime: () => {
+        const sec = Math.floor((Date.now() - startTime) / 1000);
+        const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+        print(`up ${h}h ${m}m ${s}s, 1 user, load average: 0.42, 0.31, 0.28`);
+      },
+
+      neofetch: () => {
+        const sec = Math.floor((Date.now() - startTime) / 1000);
+        const info = [
+          '<span class="term-cyan">user@webos</span>',
+          '<span class="term-dim">-----------------</span>',
+          '<span class="term-hi">OS</span>: WebOS 2.0 "Aurora"',
+          '<span class="term-hi">Kernel</span>: webterm-1.0',
+          '<span class="term-hi">Uptime</span>: ' + Math.floor(sec / 60) + ' min ' + (sec % 60) + ' sec',
+          '<span class="term-hi">Shell</span>: /bin/webterm',
+          '<span class="term-hi">Resolution</span>: ' + window.innerWidth + 'x' + window.innerHeight,
+          '<span class="term-hi">DE</span>: WebOS Desktop',
+          '<span class="term-hi">WM</span>: WebWM',
+          '<span class="term-hi">Theme</span>: ' + state.theme + ' / ' + state.accent,
+          '<span class="term-hi">Icons</span>: Emoji',
+          '<span class="term-hi">Terminal</span>: webterm',
+          '<span class="term-hi">CPU</span>: JS-V8 @ ' + navigator.hardwareConcurrency + ' cores',
+          '<span class="term-hi">Memory</span>: ' + (performance.memory ?
+            Math.round(performance.memory.usedJSHeapSize / 1048576) + 'MB / ' +
+            Math.round(performance.memory.jsHeapSizeLimit / 1048576) + 'MB' : '~64MB'),
+          '<span class="term-hi">Files</span>: ' + Object.keys(fs).length,
+          '<span class="term-hi">Windows</span>: ' + Object.keys(openWindows).length
+        ];
+        const maxRows = Math.max(LOGO.length, info.length);
+        const rows = [];
+        for (let i = 0; i < maxRows; i++) {
+          const logoLine = LOGO[i] || ' '.repeat(34);
+          const infoLine = info[i] || '';
+          rows.push('<span class="term-cyan">' + logoLine + '</span>  ' + infoLine);
+        }
+        printLines(rows);
+      },
+
+      screenfetch: () => commands.neofetch(),
+
+      clear: () => { out.innerHTML = ''; },
+      reset: () => { out.innerHTML = ''; },
+
+      reboot: () => {
+        print('Перезагрузка через 1 сек…', 'term-dim');
+        setTimeout(() => location.reload(), 1000);
+      },
+
+      logout: () => {
+        print('Выход из системы…', 'term-dim');
+        setTimeout(() => lockScreen(), 500);
+      },
+
+      lock: () => { setTimeout(() => lockScreen(), 100); },
+
+      tree: args => {
+        const target = resolvePath(args[0] || '.', cwd);
+        if (!exists(target) || !isDir(target)) return print('tree: папка не найдена', 'term-err');
+        print('<span class="term-hi">' + esc(target) + '</span>');
+        tree(target);
+      },
+
+      du: args => {
+        const target = resolvePath(args[0] || '.', cwd);
+        if (!exists(target)) return print('du: не найдено', 'term-err');
+        let total = 0;
+        Object.keys(fs).forEach(k => {
+          if (k === target || k.startsWith(target + '/')) {
+            total += isDir(k) ? 4096 : (fs[k].content || '').length;
+          }
+        });
+        print(`${total}\t${esc(target)}`);
+      },
+
+      df: () => {
+        let used = 0;
+        Object.keys(fs).forEach(k => {
+          used += isDir(k) ? 4096 : (fs[k].content || '').length;
+        });
+        print('Filesystem     Size  Used  Avail  Use%  Mounted');
+        print(`/dev/webos       5M   ${Math.round(used / 1024)}K    ${5 * 1024 - Math.round(used / 1024)}K   ${Math.round(used / (5 * 1024) * 100)}%   /`);
+        print(`tmpfs           64M     0    64M    0%   /tmp`);
+      },
+
+      free: () => {
+        const mem = performance.memory;
+        if (mem) {
+          const used = Math.round(mem.usedJSHeapSize / 1048576);
+          const total = Math.round(mem.jsHeapSizeLimit / 1048576);
+          print('              total        used        free');
+          print(`Mem:          ${total}MB       ${used}MB       ${total - used}MB`);
+        } else {
+          print('              total        used        free');
+          print('Mem:          64MB        12MB        52MB');
+        }
+      },
+
+      ps: () => {
+        print('  PID  COMMAND');
+        print('    1  /sbin/init');
+        print('  142  webterm');
+        print('  210  webwm');
+        Object.keys(openWindows).forEach((id, i) => {
+          print(String(300 + i).padStart(5) + '  ' + apps[openWindows[id].appId].title);
+        });
+      },
+
+      top: () => {
+        print('<span class="term-hi">WebOS Task Manager</span>');
+        print('─'.repeat(50));
+        const winCount = Object.keys(openWindows).length;
+        const fileCount = Object.keys(fs).length;
+        print(`Windows: ${winCount}   Files: ${fileCount}   Uptime: ${Math.floor((Date.now() - startTime) / 1000)}s`);
+        print('─'.repeat(50));
+        Object.keys(openWindows).forEach(id => {
+          const w = openWindows[id];
+          print(`  ${apps[w.appId].icon}  ${apps[w.appId].title.padEnd(20)}${w.minimized ? '[min]' : '[open]'}`);
+        });
+      },
+
+      history: () => {
+        history.forEach((h, i) => print(`  ${String(i + 1).padStart(3)}  ${esc(h)}`));
+      },
+
+      alias: args => {
+        if (!args[0]) {
+          Object.entries(aliases).forEach(([k, v]) => print(`${k}='${v}'`));
+          return;
+        }
+        const m = args[0].match(/^([^=]+)=(.+)$/);
+        if (m) { aliases[m[1]] = m[2]; print(`alias ${m[1]}='${m[2]}'`, 'term-ok'); }
+        else print('alias: неверный формат. Пример: alias ll="ls"', 'term-err');
+      },
+
+      unalias: args => {
+        if (args[0] && aliases[args[0]]) { delete aliases[args[0]]; print('Удалён', 'term-ok'); }
+        else print('unalias: не найдено', 'term-err');
+      },
+
+      export: args => {
+        if (!args[0]) { Object.entries(env).forEach(([k, v]) => print(`${k}=${v}`)); return; }
+        const m = args[0].match(/^([^=]+)=(.+)$/);
+        if (m) { env[m[1]] = m[2]; print('OK', 'term-ok'); }
+        else print('export: неверный формат', 'term-err');
+      },
+
+      env: () => Object.entries(env).forEach(([k, v]) => print(`${k}=${v}`)),
+      unset: args => { if (args[0]) delete env[args[0]]; },
+
+      which: args => {
+        if (!args[0]) return print('which: укажите команду', 'term-err');
+        if (commands[args[0]]) print('/usr/bin/' + args[0]);
+        else print('which: ' + args[0] + ' не найдено', 'term-err');
+      },
+
+      whereis: args => commands.which(args),
+
+      sudo: args => {
+        print('user is not in the sudoers file. This incident will be reported.', 'term-err');
+        print('<span class="term-dim">(шутка, но вы поняли)</span>');
+      },
+
+      apt: args => {
+        if (!args[0]) return print('apt: используйте install/list', 'term-err');
+        if (args[0] === 'install') {
+          const pkg = args[1];
+          if (!pkg) return print('apt: укажите пакет', 'term-err');
+          print(`Чтение списков пакетов… Готово`);
+          print(`Построение дерева зависимостей… Готово`);
+          print(`Будет установлено: ${pkg}`);
+          print(`Распаковка ${pkg}… Готово`);
+          print(`${pkg} успешно установлен (на самом деле нет)`, 'term-ok');
+        } else if (args[0] === 'list') {
+          print('Установленные пакеты (симуляция):');
+          ['webterm','webwm','webcalc','webnotepad','webfiles','websnake',
+           'webmines','webpaint','webclock','webtodo','websysmon'].forEach(p =>
+            print('  ' + p));
+        } else {
+          print('apt: неизвестная команда: ' + args[0], 'term-err');
+        }
+      },
+
+      'apt-get': args => commands.apt(args),
+
+      ping: args => {
+        if (!args[0]) return print('ping: укажите хост', 'term-err');
+        const host = args[0];
+        print(`PING ${host} (127.0.0.1): 56 data bytes`);
+        let count = 0;
+        const iv = setInterval(() => {
+          const ms = (Math.random() * 20 + 5).toFixed(1);
+          print(`64 bytes from 127.0.0.1: icmp_seq=${count} ttl=64 time=${ms} ms`);
+          count++;
+          if (count >= 4) {
+            clearInterval(iv);
+            print(`--- ${host} ping statistics ---`);
+            print('4 packets transmitted, 4 received, 0% packet loss', 'term-ok');
+          }
+        }, 500);
+      },
+
+      curl: args => {
+        if (!args[0]) return print('curl: укажите URL', 'term-err');
+        print(`* Connected to ${args[0]}`, 'term-dim');
+        print('* Simulating HTTP GET...', 'term-dim');
+        setTimeout(() => {
+          print('<span class="term-ok">HTTP/1.1 200 OK</span>');
+          print('Content-Type: text/html');
+          print('');
+          print('&lt;!DOCTYPE html&gt;&lt;html&gt;... (симуляция)');
+        }, 400);
+      },
+
+      wget: args => {
+        if (!args[0]) return print('wget: укажите URL', 'term-err');
+        print(`--  ${new Date().toISOString()}--  ${args[0]}`);
+        print('Resolving... connected. HTTP request sent, awaiting response...');
+        setTimeout(() => print('200 OK — saved to /tmp/file', 'term-ok'), 400);
+      },
+
+      ifconfig: () => {
+        print('eth0: flags=4163&lt;UP,BROADCAST,RUNNING,MULTICAST&gt;  mtu 1500');
+        print('        inet 192.168.1.42  netmask 255.255.255.0  broadcast 192.168.1.255');
+        print('        ether 00:1a:2b:3c:4d:5e  txqueuelen 1000');
+      },
+
+      figlet: args => {
+        const text = args.join(' ');
+        if (!text) return print('figlet: укажите текст', 'term-err');
+        print(esc(figlet(text)));
+      },
+
+      cowsay: args => {
+        const text = args.join(' ');
+        print(esc(cowsay(text)));
+      },
+
+      fortune: () => print('<span class="term-cyan">' + esc(fortune()) + '</span>'),
+
+      calc: args => {
+        const expr = args.join(' ');
+        if (!expr) return print('calc: укажите выражение', 'term-err');
+        if (!/^[0-9+\-*/.() %]+$/.test(expr)) return print('calc: недопустимые символы', 'term-err');
+        try {
+          const r = Function('"use strict";return (' + expr + ')')();
+          print(`${expr} = <span class="term-ok">${r}</span>`);
+        } catch (e) { print('calc: ошибка', 'term-err'); }
+      },
+
+      expr: args => commands.calc(args),
+
+      sleep: args => {
+        const s = parseFloat(args[0]);
+        if (isNaN(s)) return print('sleep: укажите секунды', 'term-err');
+        print(`Сплю ${s} сек...`, 'term-dim');
+        setTimeout(() => print('Проснулся!', 'term-ok'), s * 1000);
+      },
+
+      time: args => {
+        if (!args[0]) return print('time: укажите команду', 'term-err');
+        const t0 = performance.now();
+        const cmd = args[0];
+        if (commands[cmd]) {
+          try { commands[cmd](args.slice(1)); } catch (e) {}
+        }
+        const dt = (performance.now() - t0).toFixed(2);
+        print(`<span class="term-dim">real\t0m${(dt / 1000).toFixed(3)}s</span>`);
+      },
+
+      apps: () => {
+        print('<span class="term-hi">Приложения WebOS:</span>');
+        Object.keys(apps).forEach(k =>
+          print(`  <span class="term-hi">${k.padEnd(14)}</span> ${apps[k].icon}  ${apps[k].title}`));
+      },
+
+      open: args => {
+        const app = args[0];
+        if (!app) return print('open: укажите приложение. См. apps', 'term-err');
+        if (!apps[app]) return print('open: не найдено: ' + app, 'term-err');
+        openApp(app);
+        print('Запуск: ' + apps[app].title, 'term-ok');
+      },
+
+      win: () => {
+        const wins = Object.keys(openWindows);
+        if (!wins.length) return print('<span class="term-dim">Нет открытых окон</span>');
+        wins.forEach(id => {
+          const w = openWindows[id];
+          print(`  ${apps[w.appId].icon}  ${apps[w.appId].title}${w.minimized ? ' [min]' : ''}`);
+        });
+      },
+
+      notify: args => {
+        if (!args[0]) return print('notify: укажите текст', 'term-err');
+        notify('WebOS', args.join(' '), '🔔');
+        print('Уведомление отправлено', 'term-ok');
+      },
+
+      theme: args => {
+        const t = args[0];
+        if (!['dark','light','amoled'].includes(t)) {
+          return print('theme: dark / light / amoled', 'term-err');
+        }
+        state.theme = t;
+        LS.set('theme', t);
+        applyTheme();
+        print('Тема: ' + t, 'term-ok');
+      },
+
+      wallpaper: args => {
+        const w = args[0];
+        if (!WALLPAPERS[w]) {
+          return print('wallpaper: доступные: ' + Object.keys(WALLPAPERS).join(', '), 'term-err');
+        }
+        state.wallpaper = w;
+        LS.set('wallpaper', w);
+        applyTheme();
+        print('Обои: ' + w, 'term-ok');
+      },
+
+      exit: () => {
+        print('Завершение сеанса…', 'term-dim');
+      },
+
+      who: () => print('user     pts/0        2024-01-01 12:00'),
+      last: () => print('user     pts/0        192.168.1.1      Thu Jan  1 12:00 - 12:30'),
+      mount: () => {
+        print('/dev/webos on / type webos (rw)');
+        print('tmpfs on /tmp type tmpfs (rw)');
+      },
+      dmesg: () => {
+        print('[    0.000000] WebOS kernel v2.0 booting...');
+        print('[    0.001234] Initializing window manager...');
+        print('[    0.002468] Loading filesystem...');
+        print('[    0.005912] WebOS ready.');
+      },
+      stat: args => {
+        if (!args[0]) return print('stat: укажите файл', 'term-err');
+        const p = resolvePath(args[0], cwd);
+        const s = stat(p);
+        if (!s) return print('stat: не найдено', 'term-err');
+        print(`  File: ${esc(p)}`);
+        print(`  Size: ${s.size}`);
+        print(`  Type: ${s.type === 'd' ? 'directory' : 'regular file'}`);
+      },
+      file: args => {
+        if (!args[0]) return print('file: укажите файл', 'term-err');
+        const p = resolvePath(args[0], cwd);
+        if (!exists(p)) return print('file: не найдено', 'term-err');
+        if (isDir(p)) return print('directory');
+        const c = fs[p].content || '';
+        if (c.startsWith('<')) print('HTML document');
+        else if (/^[\[{]/.test(c)) print('JSON data');
+        else print('ASCII text');
+      }
+    };
+
+    function run(raw) {
+      const line = raw.trim();
+      print('<span class="term-prompt">' + esc(prompt()) + '</span> ' + esc(raw));
+      if (!line) return;
+      history.push(line);
+      hIndex = history.length;
+
+      // aliases
+      let parts = line.split(/\s+/);
+      if (aliases[parts[0]]) {
+        parts = aliases[parts[0]].split(/\s+/);
+      }
+      const cmd = parts[0].toLowerCase();
+      const args = parts.slice(1);
+
+      if (commands[cmd]) {
+        try { commands[cmd](args); }
+        catch (err) { print('Ошибка: ' + esc(err.message), 'term-err'); }
+      } else {
+        print('Команда не найдена: ' + esc(cmd) + '. Введите <span class="term-hi">help</span>.', 'term-err');
+      }
+    }
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const v = input.value;
+        input.value = '';
+        run(v);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (hIndex > 0) input.value = history[--hIndex] || '';
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (hIndex < history.length - 1) input.value = history[++hIndex] || '';
+        else { hIndex = history.length; input.value = ''; }
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        const v = input.value;
+        const m = v.match(/^(\S*)$/);
+        if (m) {
+          const prefix = m[1];
+          const matches = Object.keys(commands).filter(c => c.startsWith(prefix));
+          if (matches.length === 1) input.value = matches[0] + ' ';
+          else if (matches.length > 1) print('<span class="term-dim">' + matches.join('  ') + '</span>');
+        }
+      }
+    });
+
+    setTimeout(() => input.focus(), 120);
+  }
+};
+
+/* ---------- Змейка ---------- */
+apps.snake = {
+  title: 'Змейка', icon: '🐍', w: 380, h: 470,
+  render(body) {
+    body.innerHTML = `
+      <div class="snake-wrap">
+        <div class="snake-score">Счёт: <b>0</b></div>
+        <canvas width="330" height="330" tabindex="0"></canvas>
+        <div class="snake-hint">Стрелки / WASD · Пробел — пауза · R — заново</div>
+      </div>`;
+    const canvas = $('canvas', body);
+    const ctx = canvas.getContext('2d');
+    const scoreEl = $('.snake-score b', body);
+    const CELL = 15, COLS = 22, ROWS = 22;
+    let snake, dir, nextDir, food, score, dead, paused, timer;
+
+    const randFood = () => {
+      let p;
+      do {
+        p = { x: Math.floor(Math.random() * COLS), y: Math.floor(Math.random() * ROWS) };
+      } while (snake.some(s => s.x === p.x && s.y === p.y));
+      return p;
+    };
+    const roundRect = (x, y, w, h, r) => {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    };
+    const draw = () => {
+      ctx.fillStyle = '#0d0d16';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = 'rgba(255,255,255,.035)';
+      ctx.lineWidth = 1;
+      for (let i = 1; i < COLS; i++) {
+        ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, canvas.height); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(canvas.width, i * CELL); ctx.stroke();
+      }
+      ctx.fillStyle = '#ec4899';
+      roundRect(food.x * CELL + 2, food.y * CELL + 2, CELL - 4, CELL - 4, 4);
+      ctx.fill();
+      snake.forEach((s, i) => {
+        const t = i / Math.max(1, snake.length - 1);
+        ctx.fillStyle = i === 0 ? '#4f8cff' : `rgba(79,140,255,${0.85 - t * 0.5})`;
+        roundRect(s.x * CELL + 1, s.y * CELL + 1, CELL - 2, CELL - 2, 4);
+        ctx.fill();
+      });
+      if (dead || paused) {
+        ctx.fillStyle = 'rgba(0,0,0,.66)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 22px Segoe UI, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(dead ? 'Игра окончена' : 'Пауза', canvas.width / 2, canvas.height / 2 - 6);
+        ctx.font = '13px Segoe UI, sans-serif';
+        ctx.fillStyle = '#9aa1c0';
+        ctx.fillText(dead ? 'R — заново' : 'Пробел — продолжить',
+          canvas.width / 2, canvas.height / 2 + 22);
+      }
+    };
+    const reset = () => {
+      snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+      dir = { x: 1, y: 0 };
+      nextDir = { x: 1, y: 0 };
+      score = 0; dead = false; paused = false;
+      food = randFood();
+      scoreEl.textContent = '0';
+      draw();
+    };
+    const step = () => {
+      if (dead || paused) return;
+      dir = nextDir;
+      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+      if (head.x < 0 || head.y < 0 || head.x >= COLS || head.y >= ROWS ||
+          snake.some(s => s.x === head.x && s.y === head.y)) {
+        dead = true; draw(); return;
+      }
+      snake.unshift(head);
+      if (head.x === food.x && head.y === food.y) {
+        score += 10; scoreEl.textContent = score;
+        food = randFood();
+      } else snake.pop();
+      draw();
+    };
+    const onKey = e => {
+      const k = e.key.toLowerCase();
+      const map = { arrowup:{x:0,y:-1}, w:{x:0,y:-1}, arrowdown:{x:0,y:1}, s:{x:0,y:1},
+                    arrowleft:{x:-1,y:0}, a:{x:-1,y:0}, arrowright:{x:1,y:0}, d:{x:1,y:0} };
+      if (map[k]) {
+        e.preventDefault();
+        const nd = map[k];
+        if (nd.x !== -dir.x || nd.y !== -dir.y) nextDir = nd;
+      } else if (k === ' ') { e.preventDefault(); if (!dead) { paused = !paused; draw(); } }
+      else if (k === 'r') reset();
+    };
+    canvas.addEventListener('keydown', onKey);
+    canvas.addEventListener('click', () => canvas.focus());
+    reset();
+    timer = setInterval(step, 115);
+    setTimeout(() => canvas.focus(), 150);
+    return () => clearInterval(timer);
+  }
+};
+
+/* ---------- Сапёр ---------- */
+apps.minesweeper = {
+  title: 'Сапёр', icon: '💣', w: 400, h: 480,
+  render(body) {
+    const SIZE = 9, MINES = 10;
+    let grid, revealed, flagged, gameOver, won, minesLeft, firstClick, timerId, seconds;
+    body.innerHTML = `
+      <div class="ms-wrap">
+        <div class="ms-info">
+          <span>💣 Мины: <b class="ms-mines">10</b></span>
+          <span>⏱ Время: <b class="ms-time">0</b></span>
+        </div>
+        <div class="ms-grid"></div>
+        <div class="ms-msg">ЛКМ — открыть · ПКМ — флаг</div>
+        <button class="ms-btn">Новая игра</button>
+      </div>`;
+    const gridEl = $('.ms-grid', body);
+    const minesEl = $('.ms-mines', body);
+    const timeEl = $('.ms-time', body);
+    const msgEl = $('.ms-msg', body);
+
+    const init = () => {
+      grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
+      revealed = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
+      flagged = Array.from({ length: SIZE }, () => Array(SIZE).fill(false));
+      gameOver = false; won = false; minesLeft = MINES; firstClick = true;
+      seconds = 0; timeEl.textContent = '0';
+      if (timerId) clearInterval(timerId);
+      timerId = setInterval(() => { if (!gameOver && !won) { seconds++; timeEl.textContent = seconds; } }, 1000);
+      msgEl.textContent = 'ЛКМ — открыть · ПКМ — флаг';
+      minesEl.textContent = minesLeft;
+      render();
+    };
+
+    const placeMines = (safeR, safeC) => {
+      let placed = 0;
+      while (placed < MINES) {
+        const r = Math.floor(Math.random() * SIZE), c = Math.floor(Math.random() * SIZE);
+        if (grid[r][c] === -1) continue;
+        if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+        grid[r][c] = -1; placed++;
+      }
+      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+        if (grid[r][c] === -1) continue;
+        let n = 0;
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && grid[nr][nc] === -1) n++;
+        }
+        grid[r][c] = n;
+      }
+    };
+
+    const reveal = (r, c) => {
+      if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) return;
+      if (revealed[r][c] || flagged[r][c]) return;
+      revealed[r][c] = true;
+      if (grid[r][c] === 0) {
+        for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          reveal(r + dr, c + dc);
+        }
+      }
+      if (grid[r][c] === -1) {
+        gameOver = true;
+        msgEl.textContent = '💥 Вы подорвались!';
+        for (let rr = 0; rr < SIZE; rr++) for (let cc = 0; cc < SIZE; cc++) {
+          if (grid[rr][cc] === -1) revealed[rr][cc] = true;
+        }
+      }
+    };
+
+    const checkWin = () => {
+      let hidden = 0;
+      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+        if (!revealed[r][c] && grid[r][c] !== -1) hidden++;
+      }
+      if (hidden === 0) {
+        won = true;
+        msgEl.textContent = '🎉 Вы победили!';
+        clearInterval(timerId);
+      }
+    };
+
+    const render = () => {
+      gridEl.innerHTML = '';
+      gridEl.style.gridTemplateColumns = `repeat(${SIZE}, 28px)`;
+      for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'ms-cell';
+        if (revealed[r][c]) {
+          cell.classList.add('revealed');
+          if (grid[r][c] === -1) { cell.classList.add('mine'); cell.textContent = '💣'; }
+          else if (grid[r][c] > 0) {
+            cell.textContent = grid[r][c];
+            cell.classList.add('n' + grid[r][c]);
+          }
+        } else if (flagged[r][c]) {
+          cell.classList.add('flag');
+          cell.textContent = '🚩';
+        }
+        cell.dataset.r = r; cell.dataset.c = c;
+        gridEl.appendChild(cell);
+      }
+    };
+
+    const handleClick = (r, c, isRight) => {
+      if (gameOver || won) return;
+      if (isRight) {
+        if (revealed[r][c]) return;
+        flagged[r][c] = !flagged[r][c];
+        minesLeft += flagged[r][c] ? -1 : 1;
+        minesEl.textContent = minesLeft;
+        render();
+        return;
+      }
+      if (flagged[r][c] || revealed[r][c]) return;
+      if (firstClick) {
+        placeMines(r, c);
+        firstClick = false;
+      }
+      reveal(r, c);
+      render();
+      if (!gameOver) checkWin();
+    };
+
+    gridEl.addEventListener('click', e => {
+      const cell = e.target.closest('.ms-cell');
+      if (!cell) return;
+      handleClick(+cell.dataset.r, +cell.dataset.c, false);
+    });
+    gridEl.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const cell = e.target.closest('.ms-cell');
+      if (!cell) return;
+      handleClick(+cell.dataset.r, +cell.dataset.c, true);
+    });
+    $('.ms-btn', body).addEventListener('click', init);
+
+    init();
+    return () => clearInterval(timerId);
+  }
+};
+
+/* ---------- Рисование ---------- */
+apps.paint = {
+  title: 'Рисование', icon: '🎨', w: 640, h: 480,
+  render(body) {
+    body.innerHTML = `
+      <div class="paint">
+        <div class="paint-toolbar">
+          <button data-tool="brush" class="on">✏️ Кисть</button>
+          <button data-tool="eraser">🧽 Ластик</button>
+          <input type="color" value="#4f8cff">
+          <input type="range" min="1" max="40" value="4">
+          <button data-act="clear">🗑 Очистить</button>
+          <button data-act="save">💾 Скачать PNG</button>
+        </div>
+        <div class="paint-canvas-wrap">
+          <canvas width="520" height="340"></canvas>
+        </div>
+      </div>`;
+    const canvas = $('canvas', body);
+    const ctx = canvas.getContext('2d');
+    const colorInput = $('input[type=color]', body);
+    const sizeInput = $('input[type=range]', body);
+    let tool = 'brush', drawing = false, lastX = 0, lastY = 0;
+
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    $('.paint-toolbar', body).addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      if (btn.dataset.tool) {
+        tool = btn.dataset.tool;
+        $$('.paint-toolbar button[data-tool]', body).forEach(b =>
+          b.classList.toggle('on', b === btn));
+      } else if (btn.dataset.act === 'clear') {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      } else if (btn.dataset.act === 'save') {
+        const a = document.createElement('a');
+        a.download = 'webos-paint.png';
+        a.href = canvas.toDataURL();
+        a.click();
+        notify('Рисование', 'Изображение сохранено', '🎨', 2000);
+      }
+    });
+
+    const getPos = e => {
+      const r = canvas.getBoundingClientRect();
+      return { x: (e.clientX - r.left) * canvas.width / r.width,
+               y: (e.clientY - r.top) * canvas.height / r.height };
+    };
+    const startDraw = e => {
+      drawing = true;
+      const p = getPos(e);
+      lastX = p.x; lastY = p.y;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, sizeInput.value / 2, 0, Math.PI * 2);
+      ctx.fillStyle = tool === 'eraser' ? '#fff' : colorInput.value;
+      ctx.fill();
+    };
+    const moveDraw = e => {
+      if (!drawing) return;
+      const p = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(p.x, p.y);
+      ctx.strokeStyle = tool === 'eraser' ? '#fff' : colorInput.value;
+      ctx.lineWidth = sizeInput.value;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      lastX = p.x; lastY = p.y;
+    };
+    const endDraw = () => { drawing = false; };
+
+    canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); startDraw(e); });
+    canvas.addEventListener('pointermove', moveDraw);
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointercancel', endDraw);
+    canvas.addEventListener('pointerleave', endDraw);
+  }
+};
+
+/* ---------- Часы / Таймер / Секундомер ---------- */
+apps.clock = {
+  title: 'Часы', icon: '🕐', w: 340, h: 380,
+  render(body) {
+    body.innerHTML = `
+      <div class="clock-app">
+        <div class="clock-tabs">
+          <button class="clock-tab on" data-tab="clock">🕐 Часы</button>
+          <button class="clock-tab" data-tab="timer">⏱ Таймер</button>
+          <button class="clock-tab" data-tab="stopwatch">⏲ Секундомер</button>
+        </div>
+        <div class="clock-display">
+          <div class="clock-big">--:--:--</div>
+          <div class="clock-sub"></div>
+        </div>
+        <div class="clock-actions"></div>
+      </div>`;
+    let tab = 'clock';
+    let timerMs = 0, timerId = null, timerRemaining = 0;
+    let stopMs = 0, stopId = null;
+    const bigEl = $('.clock-big', body);
+    const subEl = $('.clock-sub', body);
+    const actionsEl = $('.clock-actions', body);
+
+    const fmt = ms => {
+      const s = Math.floor(ms / 1000);
+      const m = Math.floor(s / 60), h = Math.floor(m / 60);
+      return String(h).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    };
+
+    const render = () => {
+      if (tab === 'clock') {
+        const now = new Date();
+        bigEl.textContent = now.toLocaleTimeString('ru-RU');
+        subEl.textContent = now.toLocaleDateString('ru-RU', {
+          weekday: 'long', day: 'numeric', month: 'long'
+        });
+        actionsEl.innerHTML = '';
+        setTimeout(() => { if (tab === 'clock') render(); }, 1000);
+      } else if (tab === 'timer') {
+        bigEl.textContent = fmt(timerRemaining);
+        subEl.textContent = timerRemaining > 0 ? 'Идёт отсчёт' : 'Установите время';
+        actionsEl.innerHTML = `
+          <button data-t="1m">1 мин</button>
+          <button data-t="5m">5 мин</button>
+          <button data-t="10m">10 мин</button>
+          ${timerId ? '<button class="primary" data-act="pause">Стоп</button>' : ''}`;
+      } else {
+        bigEl.textContent = fmt(stopMs);
+        subEl.textContent = stopId ? 'Идёт' : 'Нажмите Старт';
+        actionsEl.innerHTML = `
+          ${stopId ? '<button class="primary" data-act="stop">Стоп</button>' :
+                     '<button class="primary" data-act="start">Старт</button>'}
+          <button data-act="reset">Сброс</button>`;
+      }
+    };
+
+    const startTimer = ms => {
+      if (timerId) clearInterval(timerId);
+      timerRemaining = ms;
+      timerId = setInterval(() => {
+        timerRemaining -= 100;
+        if (timerRemaining <= 0) {
+          clearInterval(timerId); timerId = null; timerRemaining = 0;
+          notify('Таймер', 'Время вышло!', '⏰', 5000);
+        }
+        render();
+      }, 100);
+      render();
+    };
+
+    const startStopwatch = () => {
+      if (stopId) return;
+      const t0 = Date.now() - stopMs;
+      stopId = setInterval(() => { stopMs = Date.now() - t0; render(); }, 100);
+      render();
+    };
+
+    $('.clock-tabs', body).addEventListener('click', e => {
+      const t = e.target.closest('.clock-tab');
+      if (!t) return;
+      tab = t.dataset.tab;
+      $$('.clock-tab', body).forEach(b => b.classList.toggle('on', b === t));
+      if (tab !== 'timer' && timerId) { clearInterval(timerId); timerId = null; }
+      if (tab !== 'stopwatch' && stopId) { clearInterval(stopId); stopId = null; }
+      render();
+    });
+
+    actionsEl.addEventListener('click', e => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      if (btn.dataset.t) {
+        const m = parseInt(btn.dataset.t) * 60 * 1000;
+        startTimer(m);
+      } else if (btn.dataset.act === 'pause') {
+        clearInterval(timerId); timerId = null; render();
+      } else if (btn.dataset.act === 'start') {
+        startStopwatch();
+      } else if (btn.dataset.act === 'stop') {
+        clearInterval(stopId); stopId = null; render();
+      } else if (btn.dataset.act === 'reset') {
+        stopMs = 0; if (stopId) { clearInterval(stopId); stopId = null; }
+        render();
+      }
+    });
+
+    render();
+    return () => {
+      if (timerId) clearInterval(timerId);
+      if (stopId) clearInterval(stopId);
+    };
+  }
+};
+
+/* ---------- Задачи ---------- */
+apps.todo = {
+  title: 'Задачи', icon: '✅', w: 400, h: 450,
+  render(body) {
+    let items = LS.get('todo', []);
+    body.innerHTML = `
+      <div class="todo">
+        <div class="todo-input-row">
+          <input type="text" placeholder="Новая задача..." maxlength="120">
+          <button>+ Добавить</button>
+        </div>
+        <div class="todo-list"></div>
+      </div>`;
+    const input = $('input', body);
+    const list = $('.todo-list', body);
+    const save = () => LS.set('todo', items);
+    const render = () => {
+      if (!items.length) {
+        list.innerHTML = '<div class="todo-empty">Список пуст. Добавьте задачу!</div>';
+        return;
+      }
+      list.innerHTML = items.map((it, i) => `
+        <div class="todo-item ${it.done ? 'done' : ''}" data-i="${i}">
+          <input type="checkbox" ${it.done ? 'checked' : ''}>
+          <span>${esc(it.text)}</span>
+          <button class="del">✕</button>
+        </div>`).join('');
+    };
+    const add = () => {
+      const v = input.value.trim();
+      if (!v) return;
+      items.push({ text: v, done: false, id: Date.now() });
+      input.value = '';
+      save(); render();
+    };
+    $('button', $('.todo-input-row', body)).addEventListener('click', add);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+    list.addEventListener('click', e => {
+      const item = e.target.closest('.todo-item');
+      if (!item) return;
+      const i = +item.dataset.i;
+      if (e.target.matches('input[type=checkbox]')) {
+        items[i].done = e.target.checked; save(); render();
+      } else if (e.target.matches('.del')) {
+        items.splice(i, 1); save(); render();
+      }
+    });
+    render();
+  }
+};
+
+/* ---------- Монитор системы ---------- */
+apps.sysmon = {
+  title: 'Монитор', icon: '📊', w: 480, h: 500,
+  render(body) {
+    body.innerHTML = `
+      <div class="sysmon">
+        <div class="sm-card">
+          <div class="sm-card-title"><span>Загрузка CPU</span><b class="cpu-val">0%</b></div>
+          <div class="sm-bar"><div class="sm-bar-fill cpu-fill" style="width:0%"></div></div>
+        </div>
+        <div class="sm-card">
+          <div class="sm-card-title"><span>Использование памяти</span><b class="mem-val">0 MB</b></div>
+          <div class="sm-bar"><div class="sm-bar-fill mem-fill" style="width:0%"></div></div>
+        </div>
+        <div class="sm-card">
+          <div class="sm-card-title"><span>Сеть (симуляция)</span><b class="net-val">0 KB/s</b></div>
+          <div class="sm-graph"><canvas width="440" height="70"></canvas></div>
+        </div>
+        <div class="sm-card">
+          <div class="sm-card-title"><span>Процессы</span><b class="proc-val">0</b></div>
+          <div class="proc-list"></div>
+        </div>
+        <div class="sm-card">
+          <div class="sm-card-title"><span>Система</span></div>
+          <div class="sm-row"><span>Платформа</span><span>${navigator.platform || '—'}</span></div>
+          <div class="sm-row"><span>Ядер CPU</span><span>${navigator.hardwareConcurrency || '?'}</span></div>
+          <div class="sm-row"><span>Файлов</span><span class="file-count">${Object.keys(fs).length}</span></div>
+          <div class="sm-row"><span>Окон</span><span class="win-count">${Object.keys(openWindows).length}</span></div>
+        </div>
+      </div>`;
+    const cpuVal = $('.cpu-val', body);
+    const memVal = $('.mem-val', body);
+    const netVal = $('.net-val', body);
+    const cpuFill = $('.cpu-fill', body);
+    const memFill = $('.mem-fill', body);
+    const procList = $('.proc-list', body);
+    const procVal = $('.proc-val', body);
+    const canvas = $('.sm-graph canvas', body);
+    const ctx = canvas.getContext('2d');
+    const history = new Array(60).fill(0);
+
+    const update = () => {
+      const cpu = Math.round(15 + Math.random() * 40);
+      cpuVal.textContent = cpu + '%';
+      cpuFill.style.width = cpu + '%';
+
+      let memUsed = 12;
+      if (performance.memory) {
+        memUsed = Math.round(performance.memory.usedJSHeapSize / 1048576);
+      }
+      memVal.textContent = memUsed + ' MB';
+      const memPct = Math.min(100, memUsed / 200 * 100);
+      memFill.style.width = memPct + '%';
+
+      const net = Math.round(Math.random() * 200);
+      netVal.textContent = net + ' KB/s';
+      history.push(net); history.shift();
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      grad.addColorStop(0, state.accent);
+      grad.addColorStop(1, 'rgba(168,85,247,0.3)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(0, canvas.height);
+      history.forEach((v, i) => {
+        const x = i / (history.length - 1) * canvas.width;
+        const y = canvas.height - (v / 250) * canvas.height;
+        ctx.lineTo(x, y);
+      });
+      ctx.lineTo(canvas.width, canvas.height);
+      ctx.closePath();
+      ctx.fill();
+
+      const wins = Object.keys(openWindows);
+      procVal.textContent = wins.length + 2;
+      procList.innerHTML = '<div class="sm-row"><span>init</span><span>PID 1</span></div>' +
+        '<div class="sm-row"><span>webterm</span><span>PID 142</span></div>' +
+        wins.map((id, i) => `<div class="sm-row"><span>${esc(apps[openWindows[id].appId].title)}</span><span>PID ${300 + i}</span></div>`).join('');
+      $('.win-count', body).textContent = wins.length;
+      $('.file-count', body).textContent = Object.keys(fs).length;
+    };
+    update();
+    const iv = setInterval(update, 1000);
+    return () => clearInterval(iv);
+  }
+};
+
+/* ---------- Настройки ---------- */
+apps.settings = {
+  title: 'Настройки', icon: '⚙️', w: 640, h: 520,
+  render(body) {
+    body.innerHTML = `
+      <div class="settings">
+        <div class="settings-side">
+          <div class="set-nav on" data-sec="appearance">🎨 Оформление</div>
+          <div class="set-nav" data-sec="theme">🌓 Тема</div>
+          <div class="set-nav" data-sec="window">🪟 Окна</div>
+          <div class="set-nav" data-sec="system">🖥 Система</div>
+        </div>
+        <div class="settings-main"></div>
+      </div>`;
+    const main = $('.settings-main', body);
+
+    const renderSec = sec => {
+      if (sec === 'appearance') {
+        main.innerHTML = `
+          <div class="set-group">
+            <h3>Обои рабочего стола</h3>
+            <div class="wp-grid">
+              ${Object.keys(WALLPAPERS).map(k => {
+                const wp = WALLPAPERS[k];
+                const bg = wp.type === 'grad' ? wp.css : wp.css;
+                return `<div class="wp${k === state.wallpaper ? ' sel' : ''}"
+                  data-wp="${k}" style="background:${bg}"></div>`;
+              }).join('')}
+            </div>
+            <div class="wp-custom">
+              <input type="text" placeholder="URL картинки (https://...)" id="wpUrl">
+              <button data-act="applyUrl">Применить</button>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Акцентный цвет</h3>
+            <div class="acc-row">
+              ${['#4f8cff','#a855f7','#ec4899','#22c55e','#f59e0b','#ef4444',
+                 '#06b6d4','#8b5cf6','#f43f5e','#10b981','#eab308','#6366f1']
+                .map(c => `<div class="acc${c === state.accent ? ' sel' : ''}"
+                  data-c="${c}" style="background:${c}"></div>`).join('')}
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Размер иконок</h3>
+            <div class="set-row"><span class="lbl">Размер</span>
+              <div class="set-ctrl">
+                <button class="set-btn${state.iconSize === 'normal' ? ' on' : ''}" data-size="normal">Обычный</button>
+                <button class="set-btn${state.iconSize === 'large' ? ' on' : ''}" data-size="large">Крупный</button>
+              </div>
+            </div>
+          </div>`;
+      } else if (sec === 'theme') {
+        main.innerHTML = `
+          <div class="set-group">
+            <h3>Тема оформления</h3>
+            <div class="set-row"><span class="lbl">Цветовая схема<small>Применяется ко всем окнам и меню</small></span>
+              <div class="set-ctrl">
+                <button class="set-btn${state.theme === 'dark' ? ' on' : ''}" data-theme="dark">🌙 Тёмная</button>
+                <button class="set-btn${state.theme === 'light' ? ' on' : ''}" data-theme="light">☀️ Светлая</button>
+                <button class="set-btn${state.theme === 'amoled' ? ' on' : ''}" data-theme="amoled">⬛ AMOLED</button>
+              </div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Шрифт</h3>
+            <div class="set-row"><span class="lbl">Размер шрифта</span>
+              <div class="set-ctrl">
+                <button class="set-btn${state.fontSize === 'small' ? ' on' : ''}" data-fs="small">Мелкий</button>
+                <button class="set-btn${state.fontSize === 'normal' ? ' on' : ''}" data-fs="normal">Обычный</button>
+                <button class="set-btn${state.fontSize === 'large' ? ' on' : ''}" data-fs="large">Крупный</button>
+              </div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Анимации</h3>
+            <div class="set-row"><span class="lbl">Плавные переходы и анимации</span>
+              <div class="set-ctrl">
+                <button class="set-btn${state.animations ? ' on' : ''}" data-anim="on">Вкл</button>
+                <button class="set-btn${!state.animations ? ' on' : ''}" data-anim="off">Выкл</button>
+              </div>
+            </div>
+          </div>`;
+      } else if (sec === 'window') {
+        main.innerHTML = `
+          <div class="set-group">
+            <h3>Прозрачность окон</h3>
+            <div class="set-row"><span class="lbl">Прозрачность панелей<small>${state.transparency}%</small></span>
+              <div class="set-ctrl">
+                <input type="range" min="60" max="100" value="${state.transparency}" id="transSlider" style="width:120px;accent-color:var(--accent)">
+              </div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Панель задач</h3>
+            <div class="set-row"><span class="lbl">Положение панели</span>
+              <div class="set-ctrl">
+                <button class="set-btn${state.taskbarPos === 'bottom' ? ' on' : ''}" data-pos="bottom">Внизу</button>
+                <button class="set-btn${state.taskbarPos === 'top' ? ' on' : ''}" data-pos="top">Вверху</button>
+              </div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Действия с окнами</h3>
+            <div class="set-row"><span class="lbl">Свернуть все окна</span>
+              <div class="set-ctrl"><button class="set-btn" data-act="minAll">Свернуть все</button></div>
+            </div>
+            <div class="set-row"><span class="lbl">Закрыть все окна</span>
+              <div class="set-ctrl"><button class="set-btn" data-act="closeAll">Закрыть все</button></div>
+            </div>
+          </div>`;
+      } else if (sec === 'system') {
+        main.innerHTML = `
+          <div class="set-group">
+            <h3>Система</h3>
+            <div class="set-row"><span class="lbl">Версия</span>
+              <div class="set-ctrl"><span style="color:var(--text-dim)">WebOS 2.0 "Aurora"</span></div>
+            </div>
+            <div class="set-row"><span class="lbl">Разрешение</span>
+              <div class="set-ctrl"><span style="color:var(--text-dim)">${window.innerWidth} × ${window.innerHeight}</span></div>
+            </div>
+            <div class="set-row"><span class="lbl">Файлов в системе</span>
+              <div class="set-ctrl"><span style="color:var(--text-dim)">${Object.keys(fs).length}</span></div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Сброс</h3>
+            <div class="set-row"><span class="lbl">Сбросить настройки оформления</span>
+              <div class="set-ctrl"><button class="set-btn" data-act="resetTheme">Сбросить</button></div>
+            </div>
+            <div class="set-row"><span class="lbl">Удалить файловую систему<small>Вернуть заводские файлы</small></span>
+              <div class="set-ctrl"><button class="set-btn" data-act="resetFs">Удалить</button></div>
+            </div>
+            <div class="set-row"><span class="lbl">Полный сброс системы</span>
+              <div class="set-ctrl"><button class="set-btn" data-act="resetAll">Сбросить всё</button></div>
+            </div>
+          </div>
+          <div class="set-group">
+            <h3>Перезагрузка</h3>
+            <div class="set-row"><span class="lbl">Перезапустить WebOS</span>
+              <div class="set-ctrl"><button class="set-btn" data-act="reload">🔄 Перезагрузить</button></div>
+            </div>
+          </div>`;
+      }
+    };
+
+    const onNavClick = e => {
+      const nav = e.target.closest('.set-nav');
+      if (!nav) return;
+      $$('.set-nav', body).forEach(n => n.classList.toggle('on', n === nav));
+      renderSec(nav.dataset.sec);
+    };
+    $('.settings-side', body).addEventListener('click', onNavClick);
+
+    main.addEventListener('click', e => {
+      const wp = e.target.closest('.wp');
+      if (wp) {
+        state.wallpaper = wp.dataset.wp;
+        LS.set('wallpaper', state.wallpaper);
+        applyTheme();
+        renderSec('appearance');
+        return;
+      }
+      const acc = e.target.closest('.acc');
+      if (acc) {
+        state.accent = acc.dataset.c;
+        LS.set('accent', state.accent);
+        applyTheme();
+        renderSec('appearance');
+        return;
+      }
+      const btn = e.target.closest('button');
+      if (!btn) return;
+
+      if (btn.dataset.size) {
+        state.iconSize = btn.dataset.size;
+        LS.set('iconSize', state.iconSize);
+        applyTheme(); renderSec('appearance');
+      } else if (btn.dataset.theme) {
+        state.theme = btn.dataset.theme;
+        LS.set('theme', state.theme);
+        applyTheme(); renderSec('theme');
+      } else if (btn.dataset.fs) {
+        state.fontSize = btn.dataset.fs;
+        LS.set('fontSize', state.fontSize);
+        applyTheme(); renderSec('theme');
+      } else if (btn.dataset.anim) {
+        state.animations = btn.dataset.anim === 'on';
+        LS.set('animations', state.animations);
+        applyTheme(); renderSec('theme');
+      } else if (btn.dataset.pos) {
+        state.taskbarPos = btn.dataset.pos;
+        LS.set('taskbarPos', state.taskbarPos);
+        applyTheme(); renderSec('window');
+      } else if (btn.dataset.act === 'applyUrl') {
+        const url = $('#wpUrl', body).value.trim();
+        if (url) {
+          WALLPAPERS.custom = { type: 'url', css: url };
+          state.wallpaper = 'custom';
+          LS.set('wallpaper', 'custom');
+          applyTheme();
+          notify('Оформление', 'Обои обновлены', '🖼️', 2000);
+        }
+      } else if (btn.dataset.act === 'minAll') {
+        Object.keys(openWindows).forEach(minimizeWindow);
+      } else if (btn.dataset.act === 'closeAll') {
+        Object.keys(openWindows).forEach(closeWindow);
+      } else if (btn.dataset.act === 'reload') {
+        location.reload();
+      } else if (btn.dataset.act === 'resetTheme') {
+        state.accent = '#4f8cff'; state.theme = 'dark'; state.wallpaper = 'g1';
+        state.fontSize = 'normal'; state.iconSize = 'normal';
+        state.taskbarPos = 'bottom'; state.animations = true;
+        LS.set('accent', state.accent); LS.set('theme', state.theme);
+        LS.set('wallpaper', state.wallpaper); LS.set('fontSize', state.fontSize);
+        LS.set('iconSize', state.iconSize); LS.set('taskbarPos', state.taskbarPos);
+        LS.set('animations', state.animations);
+        applyTheme();
+        notify('Настройки', 'Оформление сброшено', '🎨', 2000);
+        renderSec('theme');
+      } else if (btn.dataset.act === 'resetFs') {
+        if (confirm('Удалить все файлы?')) {
+          LS.set('fs', null); fs = null; location.reload();
+        }
+      } else if (btn.dataset.act === 'resetAll') {
+        if (confirm('Полный сброс системы?')) {
+          Object.keys(localStorage).forEach(k => { if (k.startsWith('webos2-')) localStorage.removeItem(k); });
+          location.reload();
+        }
+      }
+    });
+
+    main.addEventListener('input', e => {
+      if (e.target.id === 'transSlider') {
+        state.transparency = +e.target.value;
+        LS.set('transparency', state.transparency);
+        applyTheme();
+        e.target.parentElement.querySelector('small').textContent = state.transparency + '%';
+      }
+    });
+
+    renderSec('appearance');
+  }
+};
+
+/* ---------- О системе ---------- */
+apps.about = {
+  title: 'О системе', icon: 'ℹ️', w: 480, h: 440,
+  render(body) {
+    body.innerHTML = `
+      <div class="about-box">
+        <div class="big">WebOS</div>
+        <div class="ver">Версия 2.0 «Aurora»</div>
+        <div class="row"><span>Ядро</span><span>webterm-1.0 (JavaScript)</span></div>
+        <div class="row"><span>Оболочка</span><span>HTML + CSS + JS</span></div>
+        <div class="row"><span>Оконный менеджер</span><span>WebWM</span></div>
+        <div class="row"><span>Разрешение</span><span>${window.innerWidth} × ${window.innerHeight}</span></div>
+        <div class="row"><span>Хранилище</span><span>localStorage</span></div>
+        <div class="row"><span>Файлов</span><span>${Object.keys(fs).length}</span></div>
+        <div class="row"><span>Приложений</span><span>${Object.keys(apps).length}</span></div>
+        <div class="row"><span>Ядер CPU</span><span>${navigator.hardwareConcurrency || '?'}</span></div>
+        <div class="row"><span>Браузер</span><span>${esc(navigator.userAgent.split(' ').slice(-2).join(' '))}</span></div>
+      </div>`;
+  }
+};
+
+/* =========================================================
+   ИКОНКИ РАБОЧЕГО СТОЛА, ПУСК
+   ========================================================= */
+const DESKTOP_ICONS = ['files', 'notepad', 'term', 'calc', 'paint', 'clock', 'todo', 'snake', 'minesweeper', 'sysmon', 'settings'];
+
+function renderDesktopIcons() {
+  const box = $('#deskicons');
+  box.innerHTML = DESKTOP_ICONS.map(id => {
+    const a = apps[id];
+    if (!a) return '';
+    return `<div class="deskicon" data-app="${id}">
+      <span class="ico">${a.icon}</span><span>${esc(a.title)}</span>
+    </div>`;
+  }).join('');
+  box.addEventListener('dblclick', e => {
+    const icon = e.target.closest('.deskicon');
+    if (icon) openApp(icon.dataset.app);
+  });
+}
+
+function renderStartMenu() {
+  const menu = $('#startMenu');
+  const appIds = Object.keys(apps);
+  menu.innerHTML = `
+    <div class="sm-title">Приложения</div>
+    <div class="sm-grid">
+      ${appIds.map(id => `
+        <div class="sm-app" data-app="${id}">
+          <span class="i">${apps[id].icon}</span>
+          <span>${esc(apps[id].title)}</span>
+        </div>`).join('')}
+    </div>
+    <div class="sm-sep"></div>
+    <div class="sm-item" data-act="cmd"><span class="i">🔍</span><span>Command Palette (Ctrl+K)</span></div>
+    <div class="sm-item" data-act="lock"><span class="i">🔒</span><span>Заблокировать</span></div>
+    <div class="sm-sep"></div>
+    <div class="sm-foot">
+      <button data-act="settings">⚙️ Настройки</button>
+      <button data-act="about">ℹ️ О системе</button>
+    </div>`;
+  menu.addEventListener('click', e => {
+    const app = e.target.closest('.sm-app');
+    if (app) { openApp(app.dataset.app); closeStartMenu(); return; }
+    const item = e.target.closest('.sm-item');
+    if (item) {
+      const act = item.dataset.act;
+      if (act === 'cmd') showCmdPalette();
+      else if (act === 'lock') lockScreen();
+      closeStartMenu(); return;
+    }
+    const btn = e.target.closest('.sm-foot button');
+    if (btn) { openApp(btn.dataset.act); closeStartMenu(); }
+  });
+}
+
+const startMenu = $('#startMenu');
+const startBtn = $('#startBtn');
+const openStartMenu = () => { startMenu.classList.add('open'); startBtn.classList.add('on'); };
+const closeStartMenu = () => { startMenu.classList.remove('open'); startBtn.classList.remove('on'); };
+startBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  if (startMenu.classList.contains('open')) closeStartMenu();
+  else openStartMenu();
+});
+
+/* =========================================================
+   КОНТЕКСТНОЕ МЕНЮ
+   ========================================================= */
+const ctxMenu = $('#ctxMenu');
+function showContextMenu(x, y, items) {
+  ctxMenu.innerHTML = items.map((it, i) =>
+    it.sep ? '<div class="ctx-sep"></div>'
+           : `<div class="ctx-item" data-i="${i}">${it.label}</div>`).join('');
+  ctxMenu.classList.add('open');
+  const rect = ctxMenu.getBoundingClientRect();
+  ctxMenu.style.left = Math.min(x, window.innerWidth - rect.width - 8) + 'px';
+  ctxMenu.style.top = Math.min(y, window.innerHeight - rect.height - 8) + 'px';
+  ctxMenu.onclick = e => {
+    const item = e.target.closest('.ctx-item');
+    if (!item) return;
+    const action = items[+item.dataset.i];
+    hideContextMenu();
+    if (action && action.action) action.action();
+  };
+}
+function hideContextMenu() { ctxMenu.classList.remove('open'); }
+
+$('#desktop').addEventListener('contextmenu', e => {
+  if (e.target.closest('.window')) return;
+  e.preventDefault();
+  showContextMenu(e.clientX, e.clientY, [
+    { label: '📁 Проводник', action: () => openApp('files') },
+    { label: '⌨️ Терминал', action: () => openApp('term') },
+    { label: '🔍 Command Palette', action: () => showCmdPalette() },
+    { sep: true },
+    { label: '🎨 Сменить обои', action: () => openApp('settings') },
+    { label: '🌓 Сменить тему', action: () => {
+        state.theme = state.theme === 'dark' ? 'light' : 'dark';
+        LS.set('theme', state.theme); applyTheme();
+      } },
+    { sep: true },
+    { label: '🔒 Заблокировать', action: lockScreen },
+    { label: '🔄 Перезагрузить', action: () => location.reload() },
+    { label: 'ℹ️ О системе', action: () => openApp('about') }
+  ]);
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#startMenu') && !e.target.closest('#startBtn')) closeStartMenu();
+  if (!e.target.closest('#ctxMenu')) hideContextMenu();
+});
+
+/* =========================================================
+   LOCK SCREEN
+   ========================================================= */
+function lockScreen() {
+  const ls = $('#lockScreen');
+  ls.classList.add('show');
+  const tick = () => {
+    const now = new Date();
+    $('#lockTime').textContent = now.toLocaleTimeString('ru-RU', {
+      hour: '2-digit', minute: '2-digit'
+    });
+    $('#lockDate').textContent = now.toLocaleDateString('ru-RU', {
+      weekday: 'long', day: 'numeric', month: 'long'
+    });
+  };
+  tick();
+  const iv = setInterval(tick, 1000);
+  const unlock = () => {
+    ls.classList.remove('show');
+    clearInterval(iv);
+    ls.removeEventListener('click', unlock);
+  };
+  ls.addEventListener('click', unlock);
+}
+
+/* =========================================================
+   COMMAND PALETTE
+   ========================================================= */
+let cpIndex = 0, cpItems = [];
+function showCmdPalette() {
+  const cp = $('#cmdPalette');
+  cp.classList.add('show');
+  const inp = $('.cp-input', cp);
+  inp.value = '';
+  cpIndex = 0;
+  renderCpResults('');
+  setTimeout(() => inp.focus(), 50);
+  const close = () => {
+    cp.classList.remove('show');
+    inp.removeEventListener('input', onInput);
+    inp.removeEventListener('keydown', onKey);
+    cp.removeEventListener('click', onBackdrop);
+  };
+  const onBackdrop = e => { if (e.target === cp) close(); };
+  const onInput = e => { cpIndex = 0; renderCpResults(e.target.value); };
+  const onKey = e => {
+    if (e.key === 'Escape') close();
+    else if (e.key === 'ArrowDown') { e.preventDefault(); cpIndex = Math.min(cpIndex + 1, cpItems.length - 1); highlight(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); cpIndex = Math.max(cpIndex - 1, 0); highlight(); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (cpItems[cpIndex]) { cpItems[cpIndex].action(); close(); } }
+  };
+  inp.addEventListener('input', onInput);
+  inp.addEventListener('keydown', onKey);
+  cp.addEventListener('click', onBackdrop);
+}
+function renderCpResults(q) {
+  const list = $('.cp-results', document);
+  q = q.toLowerCase();
+  cpItems = [];
+  Object.keys(apps).forEach(id => {
+    const a = apps[id];
+    if (a.title.toLowerCase().includes(q) || id.includes(q)) {
+      cpItems.push({ label: a.title, icon: a.icon, sub: 'приложение',
+        action: () => openApp(id) });
+    }
+  });
+  if (q.length > 1) {
+    Object.keys(fs).forEach(p => {
+      if (p.toLowerCase().includes(q)) {
+        cpItems.push({ label: baseName(p), icon: isDir(p) ? '📁' : '📄', sub: p,
+          action: () => {
+            if (isDir(p)) { openApp('files'); }
+            else { openApp('notepad'); setTimeout(() =>
+              document.dispatchEvent(new CustomEvent('open-file', { detail: { path: p } })), 80); }
+          } });
+      }
+    });
+  }
+  cpItems = cpItems.slice(0, 20);
+  if (!cpItems.length) {
+    list.innerHTML = '<div style="padding:20px;color:var(--text-mute);text-align:center;font-size:12px">Ничего не найдено</div>';
+    return;
+  }
+  list.innerHTML = cpItems.map((it, i) =>
+    `<div class="cp-item${i === cpIndex ? ' active' : ''}" data-i="${i}">
+      <span class="i">${it.icon}</span>
+      <span>${esc(it.label)}</span>
+      <span class="sub">${esc(it.sub || '')}</span>
+    </div>`).join('');
+  list.onclick = e => {
+    const item = e.target.closest('.cp-item');
+    if (!item) return;
+    const i = +item.dataset.i;
+    cpItems[i].action();
+    $('#cmdPalette').classList.remove('show');
+  };
+}
+function highlight() {
+  $$('.cp-item').forEach((el, i) => el.classList.toggle('active', i === cpIndex));
+}
+
+/* =========================================================
+   ЧАСЫ В ПАНЕЛИ ЗАДАЧ
+   ========================================================= */
+function tickClock() {
+  const now = new Date();
+  $('#clock').textContent =
+    now.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' }) +
+    ' · ' + now.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+}
+setInterval(tickClock, 1000);
+tickClock();
+$('#clock').addEventListener('click', () => openApp('clock'));
+$('#lockBtn').addEventListener('click', lockScreen);
+$('#notifBtn').addEventListener('click', () => {
+  notify('WebOS', 'Уведомления работают!', '🔔', 3000);
+});
+
+/* =========================================================
+   ГОРЯЧИЕ КЛАВИШИ
+   ========================================================= */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeStartMenu(); hideContextMenu();
+    $('#cmdPalette').classList.remove('show'); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault(); showCmdPalette();
+  }
+  if (e.altKey && e.key.toLowerCase() === 't') { e.preventDefault(); openApp('term'); }
+  if (e.altKey && e.key.toLowerCase() === 'f') { e.preventDefault(); openApp('files'); }
+  if (e.altKey && e.key.toLowerCase() === 'l') { e.preventDefault(); lockScreen(); }
+});
+
+/* =========================================================
+   ЗАПУСК
+   ========================================================= */
+function boot() {
+  applyTheme();
+  renderDesktopIcons();
+  renderStartMenu();
+  setTimeout(() => {
+    const b = $('#boot');
+    b.style.opacity = '0';
+    setTimeout(() => b.remove(), 700);
+    setTimeout(() => {
+      openApp('about');
+      setTimeout(() => notify('WebOS', 'Добро пожаловать! Нажмите Ctrl+K для Command Palette',
+        '👋', 5000), 1500);
+    }, 400);
+  }, 2400);
+}
+boot();
+</script>
+</body>
+</html>
